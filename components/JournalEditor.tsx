@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 import { formatDate } from '@/utils/dateUtils';
@@ -42,7 +43,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
     const IconComponent = selectedIcon?.component;
 
     return (
-        <View style={styles.container}>
+        <Animated.View entering={FadeIn.duration(600).delay(100)} style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.dateText}>{formatDate(date)}</Text>
                 <Text style={styles.wordCount}>{content.trim().split(/\s+/).filter(w => w.length > 0).length} words</Text>
@@ -61,6 +62,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
             <TouchableOpacity
                 style={styles.iconSelectorTrigger}
                 onPress={() => setIsIconSelectorVisible(true)}
+                activeOpacity={0.8}
             >
                 <View style={styles.iconPreview}>
                     {IconComponent ? (
@@ -84,6 +86,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
                     style={[styles.saveButton, !content.trim() && styles.saveButtonDisabled]}
                     onPress={handleSave}
                     disabled={!content.trim()}
+                    activeOpacity={0.8}
                 >
                     <Text style={styles.saveButtonText}>Save Entry</Text>
                 </TouchableOpacity>
@@ -98,7 +101,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
                 onClose={() => setIsIconSelectorVisible(false)}
                 selectedIconId={iconId}
             />
-        </View>
+        </Animated.View>
     );
 };
 
@@ -114,22 +117,24 @@ const styles = StyleSheet.create({
         alignItems: 'baseline',
     },
     dateText: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 28,
+        fontFamily: 'Inter_700Bold',
         color: Colors.dark.text,
     },
     wordCount: {
         color: Colors.dark.textSecondary,
         fontSize: 14,
+        fontFamily: 'Inter_400Regular',
     },
     input: {
         flex: 1,
         backgroundColor: Colors.dark.backgroundElevated,
-        borderRadius: Layout.borderRadius.md,
-        padding: Layout.spacing.md,
+        borderRadius: Layout.borderRadius.xl, // More rounded
+        padding: Layout.spacing.lg,
         color: Colors.dark.text,
-        fontSize: 16,
-        lineHeight: 24,
+        fontSize: 18, // Slightly larger for comfort
+        fontFamily: 'Inter_400Regular',
+        lineHeight: 28,
         marginBottom: Layout.spacing.lg,
     },
     iconSelectorTrigger: {
@@ -137,8 +142,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.dark.backgroundSecondary,
         padding: Layout.spacing.md,
-        borderRadius: Layout.borderRadius.lg,
+        borderRadius: Layout.borderRadius.xl,
         marginBottom: Layout.spacing.lg,
+        borderWidth: 1,
+        borderColor: Colors.dark.border,
     },
     iconPreview: {
         marginRight: Layout.spacing.md,
@@ -154,32 +161,41 @@ const styles = StyleSheet.create({
     selectorText: {
         fontSize: 16,
         color: Colors.dark.text,
+        fontFamily: 'Inter_500Medium',
     },
     actions: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         gap: Layout.spacing.md,
+        marginBottom: 20
     },
     saveButton: {
         backgroundColor: Colors.dark.accent,
-        paddingVertical: 12,
-        paddingHorizontal: 32,
-        borderRadius: 24,
+        paddingVertical: 14,
+        paddingHorizontal: 36,
+        borderRadius: 30, // Pill shape
+        shadowColor: Colors.dark.accent,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
     },
     saveButtonDisabled: {
         opacity: 0.5,
+        shadowOpacity: 0,
     },
     saveButtonText: {
-        color: Colors.dark.text,
-        fontWeight: 'bold',
+        color: Colors.dark.background, // Dark text on accent color usually looks better/poppier
+        fontFamily: 'Inter_700Bold',
         fontSize: 16,
     },
     deleteButton: {
-        paddingVertical: 12,
+        paddingVertical: 14,
         paddingHorizontal: 20,
     },
     deleteButtonText: {
         color: Colors.dark.error,
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 16,
     },
 });

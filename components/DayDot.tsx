@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withSpring, withTiming, withRepeat, withSequence, useSharedValue } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 
@@ -13,10 +13,41 @@ interface DayDotProps {
 }
 
 export const DayDot: React.FC<DayDotProps> = ({ isFilled, isToday, onPress, plantColor }) => {
-    const dotStyle = useAnimatedStyle(() => {
+    // Pulse animation for "Today"
+    const pulseAnim = useAnimatedStyle(() => {
         return {
-            transform: [{ scale: withSpring(isFilled ? 1 : 0.8) }],
+            transform: [
+                { scale: withSpring(isFilled ? 1 : 0.8) }, // Base scale logic
+            ],
             opacity: withTiming(isFilled ? 1 : 0.6),
+        };
+    });
+
+    // Let's stick to Reanimated for consistency
+    const pulseScale = useSharedValue(1);
+
+    React.useEffect(() => {
+        if (isToday) {
+            pulseScale.value = withRepeat(
+                withSequence(
+                    withTiming(1.2, { duration: 1000 }),
+                    withTiming(1, { duration: 1000 })
+                ),
+                -1, // Infinite
+                true // Reverse
+            );
+        }
+    }, [isToday]);
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [
+                { scale: isToday ? pulseScale.value : withSpring(isFilled ? 1 : 0.8) }
+            ],
+            opacity: withTiming(isFilled ? 1 : 0.6),
+            backgroundColor: isFilled ? (plantColor || Colors.dark.plantGreen) : Colors.dark.dotEmpty,
+            borderColor: isToday ? Colors.dark.accent : 'transparent',
+            borderWidth: isToday ? 2 : 0,
         };
     });
 
@@ -25,12 +56,7 @@ export const DayDot: React.FC<DayDotProps> = ({ isFilled, isToday, onPress, plan
             <Animated.View
                 style={[
                     styles.dot,
-                    dotStyle,
-                    {
-                        backgroundColor: isFilled ? (plantColor || Colors.dark.plantGreen) : Colors.dark.dotEmpty,
-                        borderColor: isToday ? Colors.dark.accent : 'transparent',
-                        borderWidth: isToday ? 2 : 0,
-                    },
+                    animatedStyle
                 ]}
             />
         </TouchableOpacity>

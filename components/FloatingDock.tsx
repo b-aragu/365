@@ -40,7 +40,7 @@ interface FloatingDockProps {
 export const FloatingDock = ({ activeTab, onTabPress }: FloatingDockProps) => {
     return (
         <View style={styles.container}>
-            <View style={styles.blurContainer}>
+            <BlurView intensity={20} tint="dark" style={styles.blurContainer}>
                 <TouchableOpacity
                     style={[styles.tab, activeTab === 'year' && styles.activeTab]}
                     onPress={() => onTabPress('year')}
@@ -61,7 +61,7 @@ export const FloatingDock = ({ activeTab, onTabPress }: FloatingDockProps) => {
                 >
                     <MenuIcon color={activeTab === 'settings' ? Colors.dark.text : Colors.dark.textTertiary} />
                 </TouchableOpacity>
-            </View>
+            </BlurView>
         </View>
     );
 };
