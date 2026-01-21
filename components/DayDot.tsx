@@ -1,0 +1,52 @@
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import { Colors } from '@/constants/Colors';
+import { Layout } from '@/constants/Layout';
+
+interface DayDotProps {
+    date: string;
+    isFilled: boolean;
+    isToday: boolean;
+    onPress: () => void;
+    plantColor?: string;
+}
+
+export const DayDot: React.FC<DayDotProps> = ({ isFilled, isToday, onPress, plantColor }) => {
+    const dotStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ scale: withSpring(isFilled ? 1 : 0.8) }],
+            opacity: withTiming(isFilled ? 1 : 0.6),
+        };
+    });
+
+    return (
+        <TouchableOpacity onPress={onPress} style={styles.container}>
+            <Animated.View
+                style={[
+                    styles.dot,
+                    dotStyle,
+                    {
+                        backgroundColor: isFilled ? (plantColor || Colors.dark.plantGreen) : Colors.dark.dotEmpty,
+                        borderColor: isToday ? Colors.dark.accent : 'transparent',
+                        borderWidth: isToday ? 2 : 0,
+                    },
+                ]}
+            />
+        </TouchableOpacity>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        width: Layout.grid.dotSize + Layout.grid.dotSpacing,
+        height: Layout.grid.dotSize + Layout.grid.dotSpacing,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    dot: {
+        width: Layout.grid.dotSize,
+        height: Layout.grid.dotSize,
+        borderRadius: Layout.grid.dotSize / 2,
+    },
+});
