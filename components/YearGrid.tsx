@@ -5,6 +5,7 @@ import { generateYearDays } from '@/utils/dateUtils';
 import { JournalEntry } from '@/types';
 import { Layout } from '@/constants/Layout';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
+import { getPlantColor } from '@/constants/PlantColors';
 
 interface YearGridProps {
     year: number;
@@ -12,21 +13,25 @@ interface YearGridProps {
     onDayPress: (date: string) => void;
 }
 
-// Get plant component by ID
-const getPlantComponent = (plantId?: string) => {
-    if (!plantId) return PLANT_ICONS_LIST[0]?.component;
+// Get plant component and color by ID
+const getPlantInfo = (plantId?: string) => {
+    const defaultPlant = PLANT_ICONS_LIST[0];
+    if (!plantId) return { component: defaultPlant?.component, color: getPlantColor(plantId) };
     const found = PLANT_ICONS_LIST.find(p => p.id === plantId);
-    return found?.component || PLANT_ICONS_LIST[0]?.component;
+    return {
+        component: found?.component || defaultPlant?.component,
+        color: getPlantColor(plantId)
+    };
 };
 
-// Memoized DayDot for performance
+// Memoized DayDot
 const MemoizedDayDot = memo(DayDot);
 
 export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress }) => {
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
     const days = useMemo(() => generateYearDays(year), [year]);
 
-    // Create a map for O(1) entry lookup
+    // O(1) entry lookup
     const entryMap = useMemo(() => {
         const map = new Map<string, JournalEntry>();
         entries.forEach(e => map.set(e.date, e));
@@ -44,8 +49,8 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
         const isToday = item.date === today;
         const isFuture = item.date > today;
 
-        // Get SVG component for filled days
-        const PlantComponent = entry ? getPlantComponent(entry.plantIconId) : undefined;
+        // Get plant info for colored icon
+        const plantInfo = entry ? getPlantInfo(entry.plantIconId) : null;
 
         return (
             <MemoizedDayDot
@@ -53,7 +58,8 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
                 isFilled={!!entry}
                 isToday={isToday}
                 isFuture={isFuture}
-                PlantIcon={PlantComponent}
+                PlantIcon={plantInfo?.component}
+                plantColor={plantInfo?.color}
                 onPress={() => handleDayPress(item.date, isFuture)}
                 disabled={isFuture}
             />

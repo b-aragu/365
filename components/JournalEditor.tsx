@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback, ScrollView } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
@@ -27,7 +27,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
     const [iconId, setIconId] = useState<string>(initialIconId || PLANT_ICONS_LIST[0].id);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-    const [showPlantSelector, setShowPlantSelector] = useState(false);
 
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const confirmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,13 +60,12 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
     // Handle plant selection
     const handlePlantSelect = useCallback((newIconId: string) => {
         setIconId(newIconId);
-        setShowPlantSelector(false);
         if (newIconId !== initialIconRef.current || content !== initialContentRef.current) {
             setHasUnsavedChanges(true);
         }
     }, [content]);
 
-    // Plant the memory (explicit save)
+    // Plant the memory
     const plantMemory = useCallback(async () => {
         if (readOnly || !content.trim()) return;
 
@@ -110,18 +108,17 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
     // Read-only view
     if (readOnly) {
         return (
-            <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
+            <Animated.View entering={FadeIn.duration(300)} style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.dateText}>{formattedDate}</Text>
-                    <View style={styles.memoryBadge}>
-                        <SelectedIcon width={20} height={20} color={selectedColor} strokeWidth={1.5} />
-                        <Text style={styles.memoryBadgeText}>Memory</Text>
+                    <View style={[styles.plantBadge, { backgroundColor: `${selectedColor}20` }]}>
+                        <SelectedIcon width={24} height={24} color={selectedColor} strokeWidth={1.5} />
                     </View>
                 </View>
 
                 <ScrollView
-                    style={styles.readOnlyContent}
-                    contentContainerStyle={styles.readOnlyContentContainer}
+                    style={styles.readOnlyScroll}
+                    contentContainerStyle={styles.readOnlyContent}
                     showsVerticalScrollIndicator={false}
                 >
                     <Text style={styles.memoryText}>{content || 'No words were written...'}</Text>
@@ -132,10 +129,10 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         );
     }
 
-    // Edit view - Centered layout
+    // Edit view - Plant selector at TOP
     return (
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
-            <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
+            <Animated.View entering={FadeIn.duration(300)} style={styles.container}>
 
                 {/* Confirmation Toast */}
                 {showSaveConfirm && (
@@ -144,75 +141,73 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
                         exiting={FadeOut.duration(150)}
                         style={styles.confirmToast}
                     >
-                        <SelectedIcon width={18} height={18} color="#fff" strokeWidth={2} />
-                        <Text style={styles.confirmText}>Memory planted!</Text>
+                        <SelectedIcon width={16} height={16} color="#fff" strokeWidth={2} />
+                        <Text style={styles.confirmText}>Planted!</Text>
                     </Animated.View>
                 )}
 
-                {/* Top: Date */}
-                <View style={styles.topSection}>
-                    <Text style={styles.dateTextSubtle}>{formattedDate}</Text>
+                {/* Header: Date + Plant Selector */}
+                <View style={styles.header}>
+                    <Text style={styles.dateTextSmall}>{formattedDate}</Text>
+
+                    {/* Plant Selector Row */}
+                    <View style={styles.plantSelectorRow}>
+                        {PLANT_ICONS_LIST.slice(0, 5).map((plant) => {
+                            const isSelected = iconId === plant.id;
+                            const Icon = plant.component;
+                            const color = getPlantColor(plant.id);
+                            return (
+                                <TouchableOpacity
+                                    key={plant.id}
+                                    onPress={() => handlePlantSelect(plant.id)}
+                                    style={[
+                                        styles.plantOption,
+                                        isSelected && [styles.plantOptionSelected, { borderColor: color }]
+                                    ]}
+                                >
+                                    <Icon
+                                        width={22}
+                                        height={22}
+                                        color={isSelected ? color : Colors.dark.textTertiary}
+                                        strokeWidth={isSelected ? 2 : 1.5}
+                                        opacity={isSelected ? 1 : 0.5}
+                                    />
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
                 </View>
 
-                {/* Center: Input Area */}
-                <View style={styles.centerSection}>
+                {/* Text Input Area */}
+                <View style={styles.inputContainer}>
                     <TextInput
-                        style={styles.centeredInput}
+                        style={styles.textInput}
                         multiline
-                        placeholder="plant a memory..."
-                        placeholderTextColor="rgba(255,255,255,0.3)"
+                        placeholder="What will you remember about today?"
+                        placeholderTextColor="rgba(255,255,255,0.25)"
                         value={content}
                         onChangeText={handleContentChange}
-                        textAlignVertical="center"
+                        textAlignVertical="top"
                         selectionColor={selectedColor}
+                        autoFocus={!initialContent}
                     />
                 </View>
 
-                {/* Bottom: Plant Selector + Plant Button */}
-                <View style={styles.bottomSection}>
-                    {/* Current plant indicator - tap to change */}
-                    <TouchableOpacity
-                        style={styles.plantIndicator}
-                        onPress={() => setShowPlantSelector(!showPlantSelector)}
-                    >
-                        <SelectedIcon width={28} height={28} color={selectedColor} strokeWidth={2} />
-                        <Text style={styles.plantIndicatorText}>
-                            {showPlantSelector ? 'Choose plant' : 'Tap to change'}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {/* Plant selector */}
-                    {showPlantSelector && (
-                        <Animated.View entering={FadeIn.duration(200)} style={styles.plantSelectorRow}>
-                            {PLANT_ICONS_LIST.slice(0, 5).map((plant) => {
-                                const isSelected = iconId === plant.id;
-                                const Icon = plant.component;
-                                const color = getPlantColor(plant.id);
-                                return (
-                                    <TouchableOpacity
-                                        key={plant.id}
-                                        onPress={() => handlePlantSelect(plant.id)}
-                                        style={[styles.plantOption, isSelected && styles.plantOptionSelected]}
-                                    >
-                                        <Icon width={24} height={24} color={isSelected ? color : Colors.dark.textTertiary} strokeWidth={1.5} />
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </Animated.View>
-                    )}
-
-                    {/* Plant button - only visible when there's content */}
-                    {content.trim().length > 0 && (
+                {/* Plant Button */}
+                {content.trim().length > 0 && (
+                    <View style={styles.buttonContainer}>
                         <TouchableOpacity
                             style={[styles.plantButton, { backgroundColor: selectedColor }]}
                             onPress={plantMemory}
+                            activeOpacity={0.8}
                         >
-                            <Text style={styles.plantButtonText}>Plant</Text>
+                            <SelectedIcon width={18} height={18} color="#fff" strokeWidth={2} />
+                            <Text style={styles.plantButtonText}>Plant Memory</Text>
                         </TouchableOpacity>
-                    )}
-                </View>
+                    </View>
+                )}
 
-                <View style={styles.dockSpacer} />
+                <View style={styles.bottomSpacer} />
             </Animated.View>
         </TouchableWithoutFeedback>
     );
@@ -223,53 +218,29 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: Layout.spacing.lg,
     },
-    // Top
-    topSection: {
+    // Header
+    header: {
         paddingTop: Layout.spacing.md,
         alignItems: 'center',
+        gap: 16,
     },
-    dateTextSubtle: {
+    dateText: {
+        color: Colors.dark.text,
+        fontSize: 16,
+        fontFamily: 'Inter_500Medium',
+    },
+    dateTextSmall: {
         color: Colors.dark.textSecondary,
         fontSize: 14,
         fontFamily: 'Inter_400Regular',
     },
-    // Center
-    centerSection: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: Layout.spacing.md,
-    },
-    centeredInput: {
-        color: Colors.dark.text,
-        fontSize: 20,
-        fontFamily: 'Inter_400Regular',
-        lineHeight: 32,
-        textAlign: 'center',
-        minHeight: 100,
-    },
-    // Bottom
-    bottomSection: {
-        alignItems: 'center',
-        paddingBottom: Layout.spacing.md,
-        gap: 12,
-    },
-    plantIndicator: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        padding: 10,
+    plantBadge: {
+        padding: 12,
         borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-    },
-    plantIndicatorText: {
-        color: Colors.dark.textTertiary,
-        fontSize: 12,
-        fontFamily: 'Inter_400Regular',
     },
     plantSelectorRow: {
         flexDirection: 'row',
-        gap: 12,
-        paddingVertical: 8,
+        gap: 10,
     },
     plantOption: {
         width: 44,
@@ -278,23 +249,43 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 2,
+        borderColor: 'transparent',
     },
     plantOptionSelected: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+    },
+    // Input
+    inputContainer: {
+        flex: 1,
+        paddingTop: Layout.spacing.lg,
+    },
+    textInput: {
+        flex: 1,
+        color: Colors.dark.text,
+        fontSize: 18,
+        fontFamily: 'Inter_400Regular',
+        lineHeight: 28,
+    },
+    // Button
+    buttonContainer: {
+        alignItems: 'center',
+        paddingVertical: Layout.spacing.md,
     },
     plantButton: {
-        paddingVertical: 12,
-        paddingHorizontal: 32,
-        borderRadius: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingVertical: 14,
+        paddingHorizontal: 28,
+        borderRadius: 28,
     },
     plantButtonText: {
         color: '#fff',
         fontSize: 16,
         fontFamily: 'Inter_600SemiBold',
     },
-    dockSpacer: {
+    bottomSpacer: {
         height: 90,
     },
     // Confirmation
@@ -307,56 +298,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
-        paddingVertical: 12,
+        gap: 6,
+        paddingVertical: 10,
         backgroundColor: Colors.dark.success,
-        borderRadius: 12,
+        borderRadius: 10,
     },
     confirmText: {
         color: '#fff',
-        fontSize: 15,
+        fontSize: 14,
         fontFamily: 'Inter_600SemiBold',
     },
     // Read-only
-    header: {
-        alignItems: 'center',
-        paddingTop: Layout.spacing.lg,
-        gap: 10,
-    },
-    dateText: {
-        color: Colors.dark.text,
-        fontSize: 16,
-        fontFamily: 'Inter_500Medium',
-    },
-    memoryBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 14,
-    },
-    memoryBadgeText: {
-        color: Colors.dark.textTertiary,
-        fontSize: 12,
-        fontFamily: 'Inter_500Medium',
+    readOnlyScroll: {
+        flex: 1,
+        marginTop: Layout.spacing.lg,
     },
     readOnlyContent: {
-        flex: 1,
-        marginTop: Layout.spacing.xl,
-    },
-    readOnlyContentContainer: {
-        paddingHorizontal: Layout.spacing.md,
+        paddingHorizontal: Layout.spacing.sm,
     },
     memoryText: {
         color: Colors.dark.text,
         fontSize: 18,
         fontFamily: 'Inter_400Regular',
         lineHeight: 28,
-        textAlign: 'center',
-    },
-    bottomSpacer: {
-        height: 100,
     },
 });
