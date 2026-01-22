@@ -12,15 +12,13 @@ export default function TabLayout() {
                 tabBarActiveTintColor: Colors.dark.accent,
                 headerShown: false,
                 tabBarStyle: {
-                    backgroundColor: Colors.dark.backgroundSecondary,
-                    borderTopColor: Colors.dark.border,
+                    display: 'none', // Hide the tab bar completely
                 }
             }}>
             <Tabs.Screen
                 name="index"
                 options={{
                     title: 'Year',
-                    // Icon would go here
                 }}
             />
         </Tabs>

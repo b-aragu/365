@@ -57,11 +57,6 @@ export const FloatingDock = ({ activeTab, onTabPress }: FloatingDockProps) => {
                     </TouchableOpacity>
                 </BlurView>
             </View>
-
-            {/* External Sparkle (Bottom Right) */}
-            <View style={styles.sparkleContainer}>
-                <SparkleIcon />
-            </View>
         </View>
     );
 };
