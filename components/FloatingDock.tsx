@@ -2,24 +2,32 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
-import { Svg, Path } from 'react-native-svg';
+import { Svg, Path, Circle, Rect } from 'react-native-svg';
 
-// Grid Icon (4 squares)
+// Grid Icon (4 dots in 2x2 pattern - matching target design)
 const GridIcon = ({ color }: { color: string }) => (
     <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <Path d="M3 3H10V10H3V3Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M14 3H21V10H14V3Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M14 14H21V21H14V14Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M3 14H10V21H3V14Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <Circle cx="7" cy="7" r="2.5" fill={color} />
+        <Circle cx="17" cy="7" r="2.5" fill={color} />
+        <Circle cx="7" cy="17" r="2.5" fill={color} />
+        <Circle cx="17" cy="17" r="2.5" fill={color} />
     </Svg>
 );
 
-// Plant Icon (Potted Plant Outline)
+// Plant Icon (Detailed potted plant - matching target design)
 const PlantIcon = ({ color }: { color: string }) => (
     <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <Path d="M12 22V12M12 12L17 7M12 12L7 7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M12 12C12 12 16 9 16 12C16 15 12 12 12 12ZM12 12C12 12 8 9 8 12C8 15 12 12 12 12Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M7 17H17L19 22H5L7 17Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Pot */}
+        <Path d="M8 17H16L17.5 22H6.5L8 17Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M7.5 17H16.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+        {/* Stem */}
+        <Path d="M12 17V11" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+        {/* Leaves */}
+        <Path d="M12 11C12 11 8 9 8 6C8 4 10 4 12 5" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M12 11C12 11 16 9 16 6C16 4 14 4 12 5" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Small detail leaf */}
+        <Path d="M12 8C12 8 10 7 9 8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+        <Path d="M12 8C12 8 14 7 15 8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
     </Svg>
 );
 
