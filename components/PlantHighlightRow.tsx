@@ -27,8 +27,12 @@ export const PlantHighlightRow = () => {
                 <View style={styles.progressBar}>
                     <View style={[styles.progressFill, { width: `${Math.min(progressPercent, 100)}%` }]} />
                 </View>
-                <Text style={styles.progressText}>{entriesThisYear} / {currentDayOfYear} days</Text>
             </View>
+
+            {/* Clear label: "X memories planted out of Y days" */}
+            <Text style={styles.progressText}>
+                {entriesThisYear} {entriesThisYear === 1 ? 'memory' : 'memories'} planted in {currentDayOfYear} days
+            </Text>
 
             {/* Motivational message */}
             <Text style={styles.message}>{getMessage()}</Text>
@@ -40,11 +44,10 @@ const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         paddingHorizontal: 40,
-        gap: 8,
+        gap: 6,
     },
     progressContainer: {
         width: '100%',
-        gap: 4,
     },
     progressBar: {
         height: 4,
@@ -58,15 +61,15 @@ const styles = StyleSheet.create({
         borderRadius: 2,
     },
     progressText: {
-        color: Colors.dark.textTertiary,
-        fontSize: 11,
-        fontFamily: 'Inter_400Regular',
-        textAlign: 'center',
-    },
-    message: {
         color: Colors.dark.textSecondary,
         fontSize: 12,
         fontFamily: 'Inter_500Medium',
+        textAlign: 'center',
+    },
+    message: {
+        color: Colors.dark.textTertiary,
+        fontSize: 11,
+        fontFamily: 'Inter_400Regular',
         textAlign: 'center',
     },
 });
