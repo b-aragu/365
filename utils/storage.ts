@@ -1,53 +1,150 @@
+import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { JournalEntry, AppSettings } from '../types';
+import { JournalEntry } from '../types';
 
-const STORAGE_KEYS = {
-    ENTRIES: '@365_entries',
-    SETTINGS: '@365_settings',
+// Open/create the database
+const db = SQLite.openDatabaseSync('plant365.db');
+
+// Initialize database tables
+export const initDatabase = async (): Promise<void> => {
+    try {
+        await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS entries (
+                id TEXT PRIMARY KEY,
+                date TEXT UNIQUE NOT NULL,
+                content TEXT,
+                plantIconId TEXT,
+                wordCount INTEGER DEFAULT 0,
+                createdAt TEXT NOT NULL,
+                updatedAt TEXT,
+                year INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
+            CREATE INDEX IF NOT EXISTS idx_entries_year ON entries(year);
+        `);
+
+        // Migrate from AsyncStorage if needed
+        await migrateFromAsyncStorage();
+    } catch (error) {
+        console.error('Error initializing database:', error);
+    }
 };
 
-export const saveEntry = async (entry: JournalEntry): Promise<void> => {
+// Migrate old AsyncStorage data to SQLite
+const migrateFromAsyncStorage = async (): Promise<void> => {
     try {
-        const existingEntries = await getAllEntries();
-        const index = existingEntries.findIndex(e => e.id === entry.id);
+        const migrated = await AsyncStorage.getItem('@365_migrated_to_sqlite');
+        if (migrated === 'true') return;
 
-        if (index >= 0) {
-            existingEntries[index] = entry;
-        } else {
-            existingEntries.push(entry);
+        const oldData = await AsyncStorage.getItem('@365_entries');
+        if (oldData) {
+            const entries: JournalEntry[] = JSON.parse(oldData);
+            for (const entry of entries) {
+                await saveEntry(entry);
+            }
+            console.log(`Migrated ${entries.length} entries to SQLite`);
         }
 
-        await AsyncStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(existingEntries));
+        await AsyncStorage.setItem('@365_migrated_to_sqlite', 'true');
+    } catch (error) {
+        console.error('Migration error:', error);
+    }
+};
+
+// Save or update an entry
+export const saveEntry = async (entry: JournalEntry): Promise<void> => {
+    try {
+        await db.runAsync(
+            `INSERT OR REPLACE INTO entries (id, date, content, plantIconId, wordCount, createdAt, updatedAt, year)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                entry.id,
+                entry.date,
+                entry.content || '',
+                entry.plantIconId || null,
+                entry.wordCount || 0,
+                entry.createdAt,
+                entry.updatedAt || new Date().toISOString(),
+                entry.year
+            ]
+        );
     } catch (error) {
         console.error('Error saving entry:', error);
         throw error;
     }
 };
 
+// Get all entries
 export const getAllEntries = async (): Promise<JournalEntry[]> => {
     try {
-        const data = await AsyncStorage.getItem(STORAGE_KEYS.ENTRIES);
-        return data ? JSON.parse(data) : [];
+        const result = await db.getAllAsync<JournalEntry>('SELECT * FROM entries ORDER BY date DESC');
+        return result;
     } catch (error) {
         console.error('Error getting entries:', error);
         return [];
     }
 };
 
+// Get entry by date
 export const getEntryByDate = async (date: string): Promise<JournalEntry | undefined> => {
     try {
-        const entries = await getAllEntries();
-        return entries.find(e => e.date === date);
+        const result = await db.getFirstAsync<JournalEntry>('SELECT * FROM entries WHERE date = ?', [date]);
+        return result || undefined;
     } catch (error) {
         console.error('Error getting entry by date:', error);
         return undefined;
     }
 };
 
+// Get entries for a specific year
+export const getEntriesByYear = async (year: number): Promise<JournalEntry[]> => {
+    try {
+        const result = await db.getAllAsync<JournalEntry>('SELECT * FROM entries WHERE year = ? ORDER BY date', [year]);
+        return result;
+    } catch (error) {
+        console.error('Error getting entries by year:', error);
+        return [];
+    }
+};
+
+// Delete an entry
+export const deleteEntry = async (id: string): Promise<void> => {
+    try {
+        await db.runAsync('DELETE FROM entries WHERE id = ?', [id]);
+    } catch (error) {
+        console.error('Error deleting entry:', error);
+        throw error;
+    }
+};
+
+// Clear all data (for testing/reset)
 export const clearAllData = async (): Promise<void> => {
     try {
-        await AsyncStorage.clear();
+        await db.runAsync('DELETE FROM entries');
+        await AsyncStorage.removeItem('@365_migrated_to_sqlite');
     } catch (error) {
         console.error('Error clearing data:', error);
+    }
+};
+
+// Get entry count
+export const getEntryCount = async (): Promise<number> => {
+    try {
+        const result = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM entries');
+        return result?.count || 0;
+    } catch (error) {
+        console.error('Error getting entry count:', error);
+        return 0;
+    }
+};
+
+// Get total words
+export const getTotalWords = async (): Promise<number> => {
+    try {
+        const result = await db.getFirstAsync<{ total: number }>('SELECT SUM(wordCount) as total FROM entries');
+        return result?.total || 0;
+    } catch (error) {
+        console.error('Error getting total words:', error);
+        return 0;
     }
 };

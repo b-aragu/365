@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { initDatabase } from '@/utils/storage';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -24,8 +25,18 @@ export default function RootLayout() {
         Inter_700Bold,
     });
     const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
+    const [dbReady, setDbReady] = useState(false);
     const router = useRouter();
     const segments = useSegments();
+
+    // Initialize database on app start
+    useEffect(() => {
+        const init = async () => {
+            await initDatabase();
+            setDbReady(true);
+        };
+        init();
+    }, []);
 
     // Check onboarding status
     useEffect(() => {
@@ -42,7 +53,7 @@ export default function RootLayout() {
 
     // Hide splash and navigate appropriately
     useEffect(() => {
-        if (loaded && hasOnboarded !== null) {
+        if (loaded && hasOnboarded !== null && dbReady) {
             SplashScreen.hideAsync();
 
             // If not onboarded and not already on onboarding, redirect
@@ -51,9 +62,9 @@ export default function RootLayout() {
                 router.replace('/onboarding');
             }
         }
-    }, [loaded, hasOnboarded, segments]);
+    }, [loaded, hasOnboarded, dbReady, segments]);
 
-    if (!loaded || hasOnboarded === null) {
+    if (!loaded || hasOnboarded === null || !dbReady) {
         return null;
     }
 
