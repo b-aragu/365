@@ -218,11 +218,14 @@ export const DETAILED_PLANT_ICONS = [
     { id: 'herb-basil', name: 'Basil', component: HerbBasil, category: 'Herbs' },
 ];
 
-// Backwards compatible list (first 4 for JournalEditor)
+// Expanded plant list for JournalEditor (8 plants for variety)
 export const PLANT_ICONS_LIST = [
     { id: 'tree-pine', name: 'Tree', component: TreePine, category: 'Trees' },
     { id: 'seedling', name: 'Seedling', component: Seedling, category: 'Growth' },
-    { id: 'potted-soil', name: 'Potted', component: PottedSoil, category: 'Potted' },
     { id: 'potted-leaf', name: 'Potted Leaf', component: PottedLeaf, category: 'Potted' },
     { id: 'flower-daisy', name: 'Flower', component: FlowerDaisy, category: 'Flowers' },
+    { id: 'cactus-pot', name: 'Cactus', component: CactusPot, category: 'Cacti' },
+    { id: 'rose-tulip', name: 'Rose', component: RoseTulip, category: 'Flowers' },
+    { id: 'succulent', name: 'Succulent', component: Succulent, category: 'Cacti' },
+    { id: 'fern', name: 'Fern', component: Fern, category: 'Leaves' },
 ];

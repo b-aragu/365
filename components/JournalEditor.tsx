@@ -150,31 +150,58 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
                 <View style={styles.header}>
                     <Text style={styles.dateTextSmall}>{formattedDate}</Text>
 
-                    {/* Plant Selector Row */}
-                    <View style={styles.plantSelectorRow}>
-                        {PLANT_ICONS_LIST.slice(0, 5).map((plant) => {
-                            const isSelected = iconId === plant.id;
-                            const Icon = plant.component;
-                            const color = getPlantColor(plant.id);
-                            return (
-                                <TouchableOpacity
-                                    key={plant.id}
-                                    onPress={() => handlePlantSelect(plant.id)}
-                                    style={[
-                                        styles.plantOption,
-                                        isSelected && [styles.plantOptionSelected, { borderColor: color }]
-                                    ]}
-                                >
-                                    <Icon
-                                        width={22}
-                                        height={22}
-                                        color={isSelected ? color : Colors.dark.textTertiary}
-                                        strokeWidth={isSelected ? 2 : 1.5}
-                                        opacity={isSelected ? 1 : 0.5}
-                                    />
-                                </TouchableOpacity>
-                            );
-                        })}
+                    {/* Plant Selector - 2 rows of 4 */}
+                    <View style={styles.plantSelectorContainer}>
+                        <View style={styles.plantSelectorRow}>
+                            {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
+                                const isSelected = iconId === plant.id;
+                                const Icon = plant.component;
+                                const color = getPlantColor(plant.id);
+                                return (
+                                    <TouchableOpacity
+                                        key={plant.id}
+                                        onPress={() => handlePlantSelect(plant.id)}
+                                        style={[
+                                            styles.plantOption,
+                                            isSelected && [styles.plantOptionSelected, { borderColor: color }]
+                                        ]}
+                                    >
+                                        <Icon
+                                            width={20}
+                                            height={20}
+                                            color={isSelected ? color : Colors.dark.textTertiary}
+                                            strokeWidth={isSelected ? 2 : 1.5}
+                                            opacity={isSelected ? 1 : 0.5}
+                                        />
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                        <View style={styles.plantSelectorRow}>
+                            {PLANT_ICONS_LIST.slice(4, 8).map((plant) => {
+                                const isSelected = iconId === plant.id;
+                                const Icon = plant.component;
+                                const color = getPlantColor(plant.id);
+                                return (
+                                    <TouchableOpacity
+                                        key={plant.id}
+                                        onPress={() => handlePlantSelect(plant.id)}
+                                        style={[
+                                            styles.plantOption,
+                                            isSelected && [styles.plantOptionSelected, { borderColor: color }]
+                                        ]}
+                                    >
+                                        <Icon
+                                            width={20}
+                                            height={20}
+                                            color={isSelected ? color : Colors.dark.textTertiary}
+                                            strokeWidth={isSelected ? 2 : 1.5}
+                                            opacity={isSelected ? 1 : 0.5}
+                                        />
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
                     </View>
                 </View>
 
@@ -220,9 +247,9 @@ const styles = StyleSheet.create({
     },
     // Header
     header: {
-        paddingTop: Layout.spacing.md,
+        paddingTop: Layout.spacing.sm,
         alignItems: 'center',
-        gap: 16,
+        gap: 12,
     },
     dateText: {
         color: Colors.dark.text,
@@ -238,14 +265,18 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 20,
     },
+    plantSelectorContainer: {
+        gap: 6,
+    },
     plantSelectorRow: {
         flexDirection: 'row',
-        gap: 10,
+        gap: 8,
+        justifyContent: 'center',
     },
     plantOption: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.05)',

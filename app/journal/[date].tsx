@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Svg, Path } from 'react-native-svg';
 import { JournalEditor } from '@/components/JournalEditor';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
 import { Colors } from '@/constants/Colors';
@@ -11,6 +12,13 @@ import { getDayOfYear } from '@/utils/dateUtils';
 import { FloatingDock } from '@/components/FloatingDock';
 
 type DateStatus = 'today' | 'past-with-entry' | 'past-empty' | 'future';
+
+// Back Arrow Icon
+const BackArrow = ({ size = 24, color = Colors.dark.text }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+);
 
 export default function JournalPage() {
     const { date } = useLocalSearchParams<{ date: string }>();
@@ -40,7 +48,6 @@ export default function JournalPage() {
     }, [date]);
 
     const handleSave = async (content: string, iconId: string) => {
-        // Only allow saving for today
         if (!date || dateStatus !== 'today') return;
 
         const id = entry?.id || Math.random().toString(36).substring(2, 15);
@@ -52,18 +59,17 @@ export default function JournalPage() {
             dayOfYear: getDayOfYear(new Date(date)),
             year,
             content,
-            wordCount: content.trim().split(/\s+/).length,
+            wordCount: content.trim().split(/\s+/).filter(w => w).length,
             plantIconId: iconId,
-            createdAt: entry?.createdAt || Date.now(),
-            updatedAt: Date.now(),
-            version: 1,
+            createdAt: entry?.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         };
 
         await addEntry(newEntry);
     };
 
     const handleDelete = async () => {
-        // Implement delete
+        // Implement delete if needed
     };
 
     const handleTabPress = (tab: 'year' | 'journal' | 'settings') => {
@@ -73,7 +79,7 @@ export default function JournalPage() {
     };
 
     const handleGoBack = () => {
-        router.replace('/');
+        router.back();
     };
 
     // Format date for display
@@ -92,12 +98,12 @@ export default function JournalPage() {
         if (loading) {
             return (
                 <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color={Colors.dark.accent} />
+                    <ActivityIndicator size="large" color={Colors.dark.plantGreen} />
                 </View>
             );
         }
 
-        // Future date - shouldn't happen but handle gracefully
+        // Future date
         if (dateStatus === 'future') {
             return (
                 <View style={styles.centerContainer}>
@@ -105,8 +111,8 @@ export default function JournalPage() {
                     <Text style={styles.emptyTitle}>Not yet...</Text>
                     <Text style={styles.emptySubtitle}>This day hasn't arrived.</Text>
                     <Text style={styles.emptyHint}>Come back on {formattedDate}</Text>
-                    <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-                        <Text style={styles.backButtonText}>Return to Garden</Text>
+                    <TouchableOpacity style={styles.returnButton} onPress={handleGoBack}>
+                        <Text style={styles.returnButtonText}>Return to Garden</Text>
                     </TouchableOpacity>
                 </View>
             );
@@ -120,8 +126,8 @@ export default function JournalPage() {
                     <Text style={styles.emptyTitle}>No memory planted</Text>
                     <Text style={styles.emptySubtitle}>{formattedDate}</Text>
                     <Text style={styles.emptyHint}>This moment has passed</Text>
-                    <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-                        <Text style={styles.backButtonText}>Return to Garden</Text>
+                    <TouchableOpacity style={styles.returnButton} onPress={handleGoBack}>
+                        <Text style={styles.returnButtonText}>Return to Garden</Text>
                     </TouchableOpacity>
                 </View>
             );
@@ -146,6 +152,14 @@ export default function JournalPage() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <SafeAreaView style={styles.container}>
+                {/* Header with Back Button */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+                        <BackArrow />
+                    </TouchableOpacity>
+                    <View style={styles.headerSpacer} />
+                </View>
+
                 {renderContent()}
                 <FloatingDock activeTab="journal" onTabPress={handleTabPress} />
             </SafeAreaView>
@@ -157,6 +171,18 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.dark.background,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+    },
+    backButton: {
+        padding: 8,
+    },
+    headerSpacer: {
+        flex: 1,
     },
     centerContainer: {
         flex: 1,
@@ -190,7 +216,7 @@ const styles = StyleSheet.create({
         marginBottom: 32,
         textAlign: 'center',
     },
-    backButton: {
+    returnButton: {
         backgroundColor: Colors.dark.backgroundElevated,
         paddingVertical: 14,
         paddingHorizontal: 28,
@@ -198,7 +224,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
     },
-    backButtonText: {
+    returnButtonText: {
         color: Colors.dark.text,
         fontSize: 14,
         fontFamily: 'Inter_500Medium',

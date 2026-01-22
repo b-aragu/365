@@ -6,9 +6,8 @@ export interface JournalEntry {
     content: string;
     wordCount: number;
     plantIconId: string;
-    createdAt: number;
-    updatedAt: number;
-    version: number;
+    createdAt: string; // ISO timestamp
+    updatedAt?: string; // ISO timestamp
 }
 
 export interface PlantIcon {
