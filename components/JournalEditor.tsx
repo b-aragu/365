@@ -1,10 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback, ScrollView } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutUp, useAnimatedStyle, withSpring, withTiming, useSharedValue, runOnJS } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
 import { getPlantColor } from '@/constants/PlantColors';
+
+// Plant ID to Emoji mapping
+const PLANT_EMOJI: Record<string, string> = {
+    'tree-pine': '🌲',
+    'seedling': '🌱',
+    'potted-soil': '🪴',
+    'potted-leaf': '🌿',
+    'flower-daisy': '🌼',
+    'rose-tulip': '🌷',
+    'lavender': '💜',
+    'bush-cloud': '☁️',
+    'monstera': '🍃',
+    'fern': '🌾',
+    'cactus-pot': '🌵',
+    'succulent': '🪷',
+    'herb-basil': '🌿',
+    'watering-plant': '💧',
+    'hands-plant': '🤲',
+    'leaf-branch': '🍂',
+};
 
 interface JournalEditorProps {
     date: string;
@@ -25,7 +45,10 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
 }) => {
     const [content, setContent] = useState(initialContent);
     const [iconId, setIconId] = useState<string | undefined>(initialIconId || PLANT_ICONS_LIST[0].id);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const confirmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Format date for display
     const formattedDate = React.useMemo(() => {
@@ -38,28 +61,45 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         });
     }, [date]);
 
-    // Auto-save logic (only when not read-only)
+    // Get selected plant emoji
+    const selectedEmoji = iconId ? (PLANT_EMOJI[iconId] || '🌱') : '🌱';
+
+    // Perform save with confirmation
+    const performSave = useCallback(async () => {
+        if (readOnly || !content.trim()) return;
+
+        setIsSaving(true);
+        await onSave(content, iconId || PLANT_ICONS_LIST[0].id);
+        setIsSaving(false);
+
+        // Show confirmation
+        setShowSaveConfirm(true);
+        if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+        confirmTimeoutRef.current = setTimeout(() => {
+            setShowSaveConfirm(false);
+        }, 2000);
+    }, [content, iconId, onSave, readOnly]);
+
+    // Auto-save logic
     useEffect(() => {
         if (readOnly) return;
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
         if (content.trim()) {
             saveTimeoutRef.current = setTimeout(() => {
-                onSave(content, iconId || PLANT_ICONS_LIST[0].id);
-            }, 1500);
+                performSave();
+            }, 2000);
         }
 
         return () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         };
-    }, [content, iconId, readOnly]);
+    }, [content, iconId, readOnly, performSave]);
 
-    // Cleanup save on unmount
+    // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (!readOnly && content.trim()) {
-                onSave(content, iconId || PLANT_ICONS_LIST[0].id);
-            }
+            if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
         };
     }, []);
 
@@ -67,100 +107,103 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         Keyboard.dismiss();
     };
 
-    // Get the selected plant color for visual feedback
     const selectedPlantColor = getPlantColor(iconId);
 
     return (
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
-            <Animated.View entering={FadeIn.duration(600)} style={styles.container}>
+            <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
+
+                {/* Save Confirmation Toast */}
+                {showSaveConfirm && (
+                    <Animated.View
+                        entering={SlideInUp.duration(300)}
+                        exiting={FadeOut.duration(200)}
+                        style={styles.saveToast}
+                    >
+                        <Text style={styles.saveToastEmoji}>{selectedEmoji}</Text>
+                        <Text style={styles.saveToastText}>Memory planted!</Text>
+                    </Animated.View>
+                )}
 
                 {/* Header */}
                 <View style={styles.header}>
-                    {/* Date Display */}
                     <Text style={styles.dateText}>{formattedDate}</Text>
 
-                    {/* Mode Indicator */}
-                    <View style={[styles.modePill, readOnly && styles.readOnlyPill]}>
-                        <Text style={[styles.modeText, readOnly && styles.readOnlyText]}>
-                            {readOnly ? 'Memory' : 'Planting...'}
-                        </Text>
-                    </View>
+                    {!readOnly && (
+                        <View style={[styles.statusBadge, isSaving && styles.savingBadge]}>
+                            <Text style={styles.statusEmoji}>{selectedEmoji}</Text>
+                            <Text style={[styles.statusText, isSaving && styles.savingText]}>
+                                {isSaving ? 'Planting...' : 'Ready'}
+                            </Text>
+                        </View>
+                    )}
+
+                    {readOnly && (
+                        <View style={styles.memoryBadge}>
+                            <Text style={styles.statusEmoji}>{selectedEmoji}</Text>
+                            <Text style={styles.memoryText}>Memory</Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* Plant Selector (hidden in read-only mode) */}
                 {!readOnly && (
                     <View style={styles.plantSelectorContainer}>
-                        {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
-                            const isSelected = iconId === plant.id;
-                            const Icon = plant.component;
-                            const plantColor = getPlantColor(plant.id);
-                            return (
-                                <TouchableOpacity
-                                    key={plant.id}
-                                    onPress={() => setIconId(plant.id)}
-                                    style={[
-                                        styles.iconWrapper,
-                                        isSelected && { backgroundColor: `${plantColor}20` }
-                                    ]}
-                                    activeOpacity={0.7}
-                                >
-                                    <Icon
-                                        width={28}
-                                        height={28}
-                                        color={isSelected ? plantColor : Colors.dark.textTertiary}
-                                        strokeWidth={isSelected ? 2 : 1.5}
-                                        opacity={isSelected ? 1 : 0.4}
-                                    />
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                )}
-
-                {/* Selected Plant Indicator (for read-only) */}
-                {readOnly && iconId && (
-                    <View style={styles.readOnlyPlantContainer}>
-                        {(() => {
-                            const plant = PLANT_ICONS_LIST.find(p => p.id === iconId);
-                            if (!plant) return null;
-                            const Icon = plant.component;
-                            return (
-                                <View style={[styles.readOnlyPlantBadge, { backgroundColor: `${selectedPlantColor}20` }]}>
-                                    <Icon width={32} height={32} color={selectedPlantColor} strokeWidth={2} />
-                                </View>
-                            );
-                        })()}
+                        <Text style={styles.selectorLabel}>Choose your plant</Text>
+                        <View style={styles.plantRow}>
+                            {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
+                                const isSelected = iconId === plant.id;
+                                const emoji = PLANT_EMOJI[plant.id] || '🌱';
+                                return (
+                                    <TouchableOpacity
+                                        key={plant.id}
+                                        onPress={() => setIconId(plant.id)}
+                                        style={[
+                                            styles.emojiButton,
+                                            isSelected && styles.emojiButtonSelected
+                                        ]}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={[
+                                            styles.emojiOption,
+                                            !isSelected && styles.emojiOptionFaded
+                                        ]}>
+                                            {emoji}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
                     </View>
                 )}
 
                 {/* Content Area */}
                 <View style={styles.contentArea}>
                     {readOnly ? (
-                        // Read-only: Display as text
                         <ScrollView
                             contentContainerStyle={styles.readOnlyContent}
                             showsVerticalScrollIndicator={false}
                         >
-                            <Text style={styles.memoryText}>
+                            <Text style={styles.memoryContentText}>
                                 {content || 'No words were written...'}
                             </Text>
                         </ScrollView>
                     ) : (
-                        // Editable: TextInput
                         <TextInput
                             style={styles.input}
                             multiline
-                            placeholder="plant a memory..."
-                            placeholderTextColor="rgba(255,255,255,0.25)"
+                            placeholder="What will you remember about today?"
+                            placeholderTextColor="rgba(255,255,255,0.3)"
                             value={content}
                             onChangeText={setContent}
                             textAlignVertical="top"
                             selectionColor={selectedPlantColor}
+                            autoFocus={!initialContent}
                         />
                     )}
                 </View>
 
-                {/* Bottom Spacer for Dock */}
+                {/* Bottom Spacer */}
                 <View style={styles.bottomSpacer} />
 
             </Animated.View>
@@ -172,58 +215,112 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: Layout.spacing.lg,
-        paddingTop: Layout.spacing.lg,
+        paddingTop: Layout.spacing.md,
+    },
+    saveToast: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        backgroundColor: 'rgba(76, 175, 80, 0.95)',
+        borderRadius: 0,
+    },
+    saveToastEmoji: {
+        fontSize: 20,
+    },
+    saveToastText: {
+        color: '#fff',
+        fontSize: 14,
+        fontFamily: 'Inter_600SemiBold',
     },
     header: {
         alignItems: 'center',
-        marginBottom: 24,
-        gap: 8,
+        marginBottom: 20,
+        gap: 12,
     },
     dateText: {
-        color: Colors.dark.textSecondary,
-        fontSize: 14,
-        fontFamily: 'Inter_400Regular',
+        color: Colors.dark.text,
+        fontSize: 16,
+        fontFamily: 'Inter_500Medium',
         letterSpacing: 0.5,
     },
-    modePill: {
-        backgroundColor: Colors.dark.accent,
-        paddingVertical: 6,
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        paddingVertical: 8,
         paddingHorizontal: 16,
-        borderRadius: 16,
+        borderRadius: 20,
     },
-    readOnlyPill: {
-        backgroundColor: Colors.dark.backgroundElevated,
+    savingBadge: {
+        backgroundColor: 'rgba(156, 39, 176, 0.3)',
+    },
+    statusEmoji: {
+        fontSize: 16,
+    },
+    statusText: {
+        color: Colors.dark.textSecondary,
+        fontSize: 12,
+        fontFamily: 'Inter_500Medium',
+    },
+    savingText: {
+        color: '#CE93D8',
+    },
+    memoryBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
     },
-    modeText: {
-        color: Colors.dark.background,
+    memoryText: {
+        color: Colors.dark.textTertiary,
         fontSize: 12,
-        fontFamily: 'Inter_600SemiBold',
-    },
-    readOnlyText: {
-        color: Colors.dark.textSecondary,
+        fontFamily: 'Inter_500Medium',
     },
     plantSelectorContainer: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    selectorLabel: {
+        color: Colors.dark.textTertiary,
+        fontSize: 12,
+        fontFamily: 'Inter_400Regular',
+        marginBottom: 12,
+    },
+    plantRow: {
         flexDirection: 'row',
+        gap: 16,
+    },
+    emojiButton: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
         justifyContent: 'center',
-        gap: 20,
-        marginBottom: 24,
-    },
-    iconWrapper: {
         alignItems: 'center',
-        justifyContent: 'center',
-        height: 48,
-        width: 48,
-        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.05)',
     },
-    readOnlyPlantContainer: {
-        alignItems: 'center',
-        marginBottom: 24,
+    emojiButtonSelected: {
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
-    readOnlyPlantBadge: {
-        padding: 16,
-        borderRadius: 32,
+    emojiOption: {
+        fontSize: 24,
+    },
+    emojiOptionFaded: {
+        opacity: 0.5,
     },
     contentArea: {
         flex: 1,
@@ -235,18 +332,17 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontFamily: 'Inter_400Regular',
         lineHeight: 28,
-        paddingHorizontal: 8,
+        paddingHorizontal: 4,
     },
     readOnlyContent: {
         flexGrow: 1,
-        paddingHorizontal: 8,
+        paddingHorizontal: 4,
     },
-    memoryText: {
+    memoryContentText: {
         color: Colors.dark.text,
         fontSize: 18,
         fontFamily: 'Inter_400Regular',
         lineHeight: 28,
-        fontStyle: 'italic',
     },
     bottomSpacer: {
         height: 100,
