@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { Svg, Path, Circle } from 'react-native-svg';
 import { Colors } from '@/constants/Colors';
 
@@ -71,65 +71,79 @@ export default function OnboardingScreen() {
     const router = useRouter();
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    const handleNext = async () => {
-        if (currentSlide < slides.length - 1) {
-            setCurrentSlide(currentSlide + 1);
-        } else {
-            // Mark onboarding complete and go to main screen
+    const completeOnboarding = async () => {
+        try {
             await AsyncStorage.setItem('hasOnboarded', 'true');
-            router.replace('/');
+            router.replace('/(tabs)');
+        } catch (error) {
+            console.log('Error saving onboarding state:', error);
+            router.replace('/(tabs)');
         }
     };
 
-    const handleSkip = async () => {
-        await AsyncStorage.setItem('hasOnboarded', 'true');
-        router.replace('/');
+    const handleNext = () => {
+        if (currentSlide < slides.length - 1) {
+            setCurrentSlide(currentSlide + 1);
+        } else {
+            completeOnboarding();
+        }
+    };
+
+    const handleSkip = () => {
+        completeOnboarding();
     };
 
     const slide = slides[currentSlide];
     const IconComponent = slide.icon;
+    const isLastSlide = currentSlide === slides.length - 1;
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Skip button */}
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-                <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
+        <>
+            <Stack.Screen options={{ headerShown: false }} />
+            <SafeAreaView style={styles.container}>
+                {/* Skip button */}
+                {!isLastSlide && (
+                    <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+                        <Text style={styles.skipText}>Skip</Text>
+                    </TouchableOpacity>
+                )}
+                {isLastSlide && <View style={styles.skipButton} />}
 
-            {/* Content */}
-            <Animated.View
-                key={slide.id}
-                entering={SlideInRight.duration(300)}
-                exiting={SlideOutLeft.duration(300)}
-                style={styles.content}
-            >
-                <View style={styles.iconContainer}>
-                    <IconComponent size={100} />
+                {/* Content */}
+                <Animated.View
+                    key={slide.id}
+                    entering={SlideInRight.duration(300)}
+                    exiting={SlideOutLeft.duration(300)}
+                    style={styles.content}
+                >
+                    <View style={styles.iconContainer}>
+                        <IconComponent size={100} />
+                    </View>
+                    <Text style={styles.title}>{slide.title}</Text>
+                    <Text style={styles.subtitle}>{slide.subtitle}</Text>
+                </Animated.View>
+
+                {/* Dots */}
+                <View style={styles.dotsContainer}>
+                    {slides.map((_, index) => (
+                        <View
+                            key={index}
+                            style={[
+                                styles.dot,
+                                index === currentSlide && styles.dotActive
+                            ]}
+                        />
+                    ))}
                 </View>
-                <Text style={styles.title}>{slide.title}</Text>
-                <Text style={styles.subtitle}>{slide.subtitle}</Text>
-            </Animated.View>
 
-            {/* Dots */}
-            <View style={styles.dotsContainer}>
-                {slides.map((_, index) => (
-                    <View
-                        key={index}
-                        style={[
-                            styles.dot,
-                            index === currentSlide && styles.dotActive
-                        ]}
-                    />
-                ))}
-            </View>
-
-            {/* Button */}
-            <TouchableOpacity style={styles.button} onPress={handleNext}>
-                <Text style={styles.buttonText}>
-                    {currentSlide === slides.length - 1 ? "Get Started" : "Next"}
-                </Text>
-            </TouchableOpacity>
-        </SafeAreaView>
+                {/* Button */}
+                <TouchableOpacity style={styles.button} onPress={handleNext} activeOpacity={0.8}>
+                    <Text style={styles.buttonText}>
+                        {isLastSlide ? "Get Started" : "Next"}
+                    </Text>
+                </TouchableOpacity>
+            </SafeAreaView>
+        </>
     );
 }
 
@@ -142,6 +156,7 @@ const styles = StyleSheet.create({
     skipButton: {
         alignSelf: 'flex-end',
         padding: 12,
+        minHeight: 48,
     },
     skipText: {
         color: Colors.dark.textSecondary,
