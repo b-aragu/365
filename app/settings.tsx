@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, TextInput, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import { Svg, Path } from 'react-native-svg';
+import { Svg, Path, Circle } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/Colors';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
 
@@ -25,6 +26,14 @@ const MailIcon = ({ size = 20, color = Colors.dark.textSecondary }) => (
     </Svg>
 );
 
+const HelpIcon = ({ size = 20, color = Colors.dark.textSecondary }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={2} />
+        <Path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <Circle cx="12" cy="17" r="1" fill={color} />
+    </Svg>
+);
+
 export default function SettingsScreen() {
     const router = useRouter();
     const { entries } = useJournalEntries();
@@ -36,6 +45,11 @@ export default function SettingsScreen() {
     const totalWords = entries.reduce((acc, e) => acc + (e.wordCount || 0), 0);
 
     const openGithub = () => Linking.openURL('https://github.com/b-aragu/365');
+
+    const showOnboarding = async () => {
+        await AsyncStorage.removeItem('hasOnboarded');
+        router.replace('/onboarding');
+    };
 
     const sendFeedback = () => {
         if (!feedbackText.trim()) {
@@ -80,8 +94,6 @@ export default function SettingsScreen() {
                     {/* Preferences */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Preferences</Text>
-
-                        {/* Haptic */}
                         <View style={styles.settingRow}>
                             <View>
                                 <Text style={styles.settingLabel}>Haptic Feedback</Text>
@@ -94,6 +106,20 @@ export default function SettingsScreen() {
                                 thumbColor={Colors.dark.text}
                             />
                         </View>
+                    </View>
+
+                    {/* Help */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Help</Text>
+                        <TouchableOpacity style={styles.actionRow} onPress={showOnboarding}>
+                            <View style={styles.actionContent}>
+                                <HelpIcon />
+                                <View>
+                                    <Text style={styles.actionLabel}>How It Works</Text>
+                                    <Text style={styles.actionDesc}>View the introduction again</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Feedback */}
@@ -165,8 +191,8 @@ const styles = StyleSheet.create({
     title: { color: Colors.dark.text, fontSize: 18, fontFamily: 'Inter_600SemiBold' },
     placeholder: { width: 40 },
     content: { flex: 1, paddingHorizontal: 20 },
-    section: { marginTop: 28 },
-    sectionTitle: { color: Colors.dark.textSecondary, fontSize: 12, fontFamily: 'Inter_600SemiBold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
+    section: { marginTop: 24 },
+    sectionTitle: { color: Colors.dark.textSecondary, fontSize: 12, fontFamily: 'Inter_600SemiBold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
     statsRow: { flexDirection: 'row', gap: 16 },
     statItem: { flex: 1, backgroundColor: Colors.dark.backgroundElevated, padding: 20, borderRadius: 16, alignItems: 'center' },
     statNumber: { color: Colors.dark.text, fontSize: 28, fontFamily: 'Inter_700Bold', marginBottom: 4 },
