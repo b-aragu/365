@@ -45,9 +45,14 @@ export const DayDot: React.FC<DayDotProps> = ({ isFilled, isToday, onPress, plan
                 { scale: isToday ? pulseScale.value : withSpring(isFilled ? 1 : 0.8) }
             ],
             opacity: withTiming(isFilled ? 1 : 0.6),
-            backgroundColor: isFilled ? (plantColor || Colors.dark.plantGreen) : Colors.dark.dotEmpty,
-            borderColor: isToday ? Colors.dark.accent : 'transparent',
-            borderWidth: isToday ? 2 : 0,
+            backgroundColor: isToday ? Colors.dark.dotHighlight : (isFilled ? (plantColor || Colors.dark.plantGreen) : Colors.dark.dotEmpty),
+            borderColor: 'transparent',
+            borderWidth: 0,
+            shadowColor: isToday ? Colors.dark.dotHighlight : 'transparent',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: isToday ? 0.8 : 0,
+            shadowRadius: isToday ? 8 : 0,
+            elevation: isToday ? 10 : 0,
         };
     });
 

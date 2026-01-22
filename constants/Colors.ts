@@ -15,7 +15,8 @@ export const Colors = {
         plantGreen: '#4CAF50',
         plantGreenLight: '#7ED957',
         plantGreenDark: '#2E7D32',
-        dotEmpty: '#3A3A3A',
+        dotEmpty: '#222222', // Darker for subtlety
+        dotHighlight: '#FFFFFF', // Bright white for today
     },
 };
 

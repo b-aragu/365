@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import Animated, { FadeIn, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
-import { formatDate } from '@/utils/dateUtils';
-import { IconSelector } from '@/components/IconSelector';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
+import { Svg, Path } from 'react-native-svg';
+
+// Decorative Sparkle Icon
+const SparkleIcon = () => (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <Path d="M12 2L14.39 9.61L22 12L14.39 14.39L12 22L9.61 14.39L2 12L9.61 9.61L12 2Z" fill={Colors.dark.textTertiary} opacity={0.5} />
+    </Svg>
+);
 
 interface JournalEditorProps {
     date: string;
@@ -17,185 +23,176 @@ interface JournalEditorProps {
 }
 
 export const JournalEditor: React.FC<JournalEditorProps> = ({
-    date,
     initialContent = '',
     initialIconId,
     onSave,
-    onDelete,
-    isNewEntry,
 }) => {
     const [content, setContent] = useState(initialContent);
-    const [iconId, setIconId] = useState<string | undefined>(initialIconId);
-    const [isIconSelectorVisible, setIsIconSelectorVisible] = useState(false);
-    const [charCount, setCharCount] = useState(initialContent.length);
+    const [iconId, setIconId] = useState<string | undefined>(initialIconId || PLANT_ICONS_LIST[0].id);
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Auto-save logic
     useEffect(() => {
-        setCharCount(content.length);
-    }, [content]);
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
-    const handleSave = async () => {
-        if (!content.trim()) return;
-        const selectedIcon = iconId || PLANT_ICONS_LIST[0].id;
-        await onSave(content, selectedIcon);
+        // Save after 1 second of inactivity if content exists
+        if (content.trim()) {
+            saveTimeoutRef.current = setTimeout(() => {
+                onSave(content, iconId || PLANT_ICONS_LIST[0].id);
+            }, 1000);
+        }
+
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, [content, iconId]);
+
+    // Cleanup save on unmount (ensure final state is saved)
+    useEffect(() => {
+        return () => {
+            if (content.trim()) {
+                onSave(content, iconId || PLANT_ICONS_LIST[0].id);
+            }
+        };
+    }, []);
+
+    const dismissKeyboard = () => {
+        Keyboard.dismiss();
     };
 
-    const selectedIcon = PLANT_ICONS_LIST.find(i => i.id === iconId);
-    const IconComponent = selectedIcon?.component;
-
     return (
-        <Animated.View entering={FadeIn.duration(600).delay(100)} style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.dateText}>{formatDate(date)}</Text>
-                <Text style={styles.wordCount}>{content.trim().split(/\s+/).filter(w => w.length > 0).length} words</Text>
-            </View>
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+            <Animated.View entering={FadeIn.duration(800)} style={styles.container}>
 
-            <TextInput
-                style={styles.input}
-                multiline
-                placeholder="Write your thoughts for today..."
-                placeholderTextColor={Colors.dark.textTertiary}
-                value={content}
-                onChangeText={setContent}
-                textAlignVertical="top"
-            />
+                {/* Header: Icons + Edit Pill */}
+                <View style={styles.topArea}>
+                    <View style={styles.plantSelector}>
+                        {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
+                            const isSelected = iconId === plant.id;
+                            const Icon = plant.component;
+                            return (
+                                <TouchableOpacity
+                                    key={plant.id}
+                                    onPress={() => setIconId(plant.id)}
+                                    style={styles.iconWrapper}
+                                    activeOpacity={0.7}
+                                >
+                                    <Icon
+                                        width={32} // Slightly larger
+                                        height={32}
+                                        color={isSelected ? Colors.dark.text : Colors.dark.textTertiary}
+                                        strokeWidth={isSelected ? 2 : 1.5}
+                                        opacity={isSelected ? 1 : 0.4} // Dim unselected
+                                    />
+                                    {/* Subtler glow for selected, NO dot */}
+                                    {isSelected && <Animated.View entering={FadeIn} style={styles.selectionGlow} />}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
 
-            <TouchableOpacity
-                style={styles.iconSelectorTrigger}
-                onPress={() => setIsIconSelectorVisible(true)}
-                activeOpacity={0.8}
-            >
-                <View style={styles.iconPreview}>
-                    {IconComponent ? (
-                        <IconComponent width={32} height={32} />
-                    ) : (
-                        <View style={styles.emptyIcon} />
-                    )}
-                </View>
-                <Text style={styles.selectorText}>
-                    {selectedIcon ? selectedIcon.name : 'Choose a plant'}
-                </Text>
-            </TouchableOpacity>
-
-            <View style={styles.actions}>
-                {!isNewEntry && (
-                    <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
-                        <Text style={styles.deleteButtonText}>Delete</Text>
+                    <TouchableOpacity style={styles.editPill}>
+                        <Text style={styles.editPillText}>Edit</Text>
                     </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                    style={[styles.saveButton, !content.trim() && styles.saveButtonDisabled]}
-                    onPress={handleSave}
-                    disabled={!content.trim()}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.saveButtonText}>Save Entry</Text>
-                </TouchableOpacity>
-            </View>
+                </View>
 
-            <IconSelector
-                visible={isIconSelectorVisible}
-                onSelect={(id) => {
-                    setIconId(id);
-                    setIsIconSelectorVisible(false);
-                }}
-                onClose={() => setIsIconSelectorVisible(false)}
-                selectedIconId={iconId}
-            />
-        </Animated.View>
+                {/* Massive Whitespace - Push Input DOWN to bottom third */}
+                <View style={styles.spacer} />
+
+                {/* Input Area */}
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        multiline
+                        placeholder="plant memory.."
+                        placeholderTextColor={Colors.dark.textTertiary}
+                        value={content}
+                        onChangeText={setContent}
+                        textAlignVertical="bottom" // Typing starts at bottom
+                        selectionColor={Colors.dark.accent}
+                    />
+                </View>
+
+                {/* Bottom Decorative Area */}
+                <View style={styles.bottomArea}>
+                    <View style={styles.sparkleContainer}>
+                        <SparkleIcon />
+                    </View>
+                </View>
+
+            </Animated.View>
+        </TouchableWithoutFeedback>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: Layout.spacing.md,
+        paddingHorizontal: Layout.spacing.lg,
+        paddingTop: Layout.spacing.xl,
     },
-    header: {
-        marginBottom: Layout.spacing.md,
+    topArea: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'baseline',
+        alignItems: 'flex-start',
+        marginTop: 20,
     },
-    dateText: {
-        fontSize: 28,
-        fontFamily: 'Inter_700Bold',
-        color: Colors.dark.text,
-    },
-    wordCount: {
-        color: Colors.dark.textSecondary,
-        fontSize: 14,
-        fontFamily: 'Inter_400Regular',
-    },
-    input: {
-        flex: 1,
-        backgroundColor: Colors.dark.backgroundElevated,
-        borderRadius: Layout.borderRadius.xl, // More rounded
-        padding: Layout.spacing.lg,
-        color: Colors.dark.text,
-        fontSize: 18, // Slightly larger for comfort
-        fontFamily: 'Inter_400Regular',
-        lineHeight: 28,
-        marginBottom: Layout.spacing.lg,
-    },
-    iconSelectorTrigger: {
+    plantSelector: {
         flexDirection: 'row',
+        gap: 32, // Generous spacing
+    },
+    iconWrapper: {
         alignItems: 'center',
-        backgroundColor: Colors.dark.backgroundSecondary,
-        padding: Layout.spacing.md,
-        borderRadius: Layout.borderRadius.xl,
-        marginBottom: Layout.spacing.lg,
-        borderWidth: 1,
-        borderColor: Colors.dark.border,
+        justifyContent: 'center',
+        height: 44,
+        width: 44,
     },
-    iconPreview: {
-        marginRight: Layout.spacing.md,
-    },
-    emptyIcon: {
+    selectionGlow: {
+        position: 'absolute',
         width: 32,
         height: 32,
         borderRadius: 16,
-        borderWidth: 2,
-        borderColor: Colors.dark.textTertiary,
-        borderStyle: 'dashed',
+        backgroundColor: Colors.dark.text,
+        opacity: 0.1, // Very subtle glow bloom behind
+        zIndex: -1,
     },
-    selectorText: {
-        fontSize: 16,
+    editPill: {
+        backgroundColor: Colors.dark.backgroundElevated, // Less prominent
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        opacity: 0.8,
+    },
+    editPillText: {
         color: Colors.dark.text,
         fontFamily: 'Inter_500Medium',
+        fontSize: 12,
     },
-    actions: {
+    spacer: {
+        flex: 3, // Push everything down more
+    },
+    inputContainer: {
+        flex: 2, // Taller input area
+        justifyContent: 'flex-end', // Align text to bottom of this section
+        marginBottom: 20,
+        paddingHorizontal: 8,
+    },
+    input: {
+        color: Colors.dark.text,
+        fontSize: 18,
+        fontFamily: 'Inter_400Regular',
+        lineHeight: 28,
+        minHeight: 120, // Taller touch target
+    },
+    bottomArea: {
+        height: 80,
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        gap: Layout.spacing.md,
-        marginBottom: 20
+        alignItems: 'center',
+        paddingBottom: 20,
     },
-    saveButton: {
-        backgroundColor: Colors.dark.accent,
-        paddingVertical: 14,
-        paddingHorizontal: 36,
-        borderRadius: 30, // Pill shape
-        shadowColor: Colors.dark.accent,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    saveButtonDisabled: {
-        opacity: 0.5,
-        shadowOpacity: 0,
-    },
-    saveButtonText: {
-        color: Colors.dark.background, // Dark text on accent color usually looks better/poppier
-        fontFamily: 'Inter_700Bold',
-        fontSize: 16,
-    },
-    deleteButton: {
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-    },
-    deleteButtonText: {
-        color: Colors.dark.error,
-        fontFamily: 'Inter_600SemiBold',
-        fontSize: 16,
-    },
+    sparkleContainer: {
+        opacity: 0.8,
+        padding: 8,
+    }
 });

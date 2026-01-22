@@ -9,9 +9,9 @@ export const Layout = {
     },
     grid: {
         padding: 20,
-        dotSize: 14, // Slightly smaller than spec to fit phones better initially
-        dotSpacing: 6,
-        maxDotsPerRow: 20,
+        dotSize: 10, // Smaller for 365 grid density
+        dotSpacing: 8, // More spacing for airiness
+        maxDotsPerRow: 18, // Adjust columns for phone width
     },
     spacing: {
         xs: 4,

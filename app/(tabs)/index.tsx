@@ -6,6 +6,7 @@ import { YearGrid } from '@/components/YearGrid';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
 import { Colors } from '@/constants/Colors';
 import { getDaysRemaining } from '@/utils/dateUtils';
+import { PlantHighlightRow } from '@/components/PlantHighlightRow';
 import { FloatingDock } from '@/components/FloatingDock';
 
 export default function HomeScreen() {
@@ -40,6 +41,10 @@ export default function HomeScreen() {
                 <Text style={styles.daysLabel}>days left in {currentYear}</Text>
             </View>
 
+            <View style={styles.iconRowContainer}>
+                <PlantHighlightRow />
+            </View>
+
             <View style={styles.gridContainer}>
                 <YearGrid
                     year={currentYear}
@@ -48,9 +53,9 @@ export default function HomeScreen() {
                 />
             </View>
 
-            {/* Bottom Quote moved or removed for cleaner look, keeping minimal for now */}
             <View style={styles.footer}>
-                <Text style={styles.quote}>"Growth is a process."</Text>
+                <Text style={styles.quote}>"I PLANT A MEMORY A DAY"</Text>
+                <Text style={styles.subQuote}>plant memory..</Text>
             </View>
 
             <FloatingDock activeTab={activeTab} onTabPress={handleTabPress} />
@@ -64,37 +69,52 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.dark.background,
     },
     header: {
-        marginTop: 40,
+        marginTop: 20, // Reduced top margin
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 10,
     },
     daysRemaining: {
         color: Colors.dark.text,
-        fontSize: 48,
-        fontFamily: 'Inter_700Bold', // Using new font
+        fontSize: 32, // Slightly smaller than 48 to match reference
+        fontFamily: 'Inter_700Bold',
         fontWeight: 'bold',
         marginBottom: 4,
     },
     daysLabel: {
         color: Colors.dark.textSecondary,
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'Inter_400Regular',
+    },
+    iconRowContainer: {
+        marginBottom: 10,
+        height: 40,
+        justifyContent: 'center',
     },
     gridContainer: {
         flex: 1,
-        justifyContent: 'center', // Center vertically
+        justifyContent: 'center',
         alignItems: 'center',
+        paddingHorizontal: 20,
     },
     footer: {
         position: 'absolute',
-        bottom: 110, // Above the dock
+        bottom: 120, // Higher up to clear dock
         width: '100%',
         alignItems: 'center',
+        opacity: 0.7,
     },
     quote: {
+        color: Colors.dark.text,
+        letterSpacing: 2,
+        fontFamily: 'Inter_700Bold',
+        fontSize: 12,
+        marginBottom: 4,
+        textTransform: 'uppercase',
+    },
+    subQuote: {
         color: Colors.dark.textTertiary,
-        fontStyle: 'italic',
         fontFamily: 'Inter_400Regular',
-        fontSize: 14,
+        fontSize: 12,
+        fontStyle: 'italic',
     },
 });
