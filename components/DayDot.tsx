@@ -1,18 +1,16 @@
 import React, { memo } from 'react';
-import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, withSpring, withTiming, withRepeat, withSequence, useSharedValue } from 'react-native-reanimated';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, withTiming, withRepeat, withSequence, useSharedValue } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 
 interface DayDotProps {
     date: string;
-    dayNumber: number;
     isFilled: boolean;
     isToday: boolean;
     isFuture?: boolean;
-    brightness: 'past' | 'today' | 'future';
     onPress: () => void;
-    plantEmoji?: string;
+    PlantIcon?: React.ComponentType<any>;
     disabled?: boolean;
 }
 
@@ -20,9 +18,8 @@ const DayDotComponent: React.FC<DayDotProps> = ({
     isFilled,
     isToday,
     isFuture = false,
-    brightness,
     onPress,
-    plantEmoji,
+    PlantIcon,
     disabled = false
 }) => {
     const pulseScale = useSharedValue(1);
@@ -31,8 +28,8 @@ const DayDotComponent: React.FC<DayDotProps> = ({
         if (isToday) {
             pulseScale.value = withRepeat(
                 withSequence(
-                    withTiming(1.4, { duration: 1000 }),
-                    withTiming(1, { duration: 1000 })
+                    withTiming(1.6, { duration: 1200 }),
+                    withTiming(1, { duration: 1200 })
                 ),
                 -1,
                 true
@@ -40,26 +37,17 @@ const DayDotComponent: React.FC<DayDotProps> = ({
         }
     }, [isToday]);
 
-    // Brightness values
-    const opacityMap = {
-        past: 0.6,      // Past days: visible but not bright
-        today: 1,       // Today: full brightness
-        future: 0.2,    // Future: very faded
-    };
-
-    const animatedStyle = useAnimatedStyle(() => {
-        const baseOpacity = opacityMap[brightness];
-
+    const animatedDotStyle = useAnimatedStyle(() => {
         return {
             transform: [
-                { scale: isToday ? pulseScale.value : withSpring(1) }
+                { scale: isToday ? pulseScale.value : 1 }
             ],
-            opacity: isFilled ? 1 : baseOpacity,
         };
     });
 
-    // If filled with a memory, show emoji
-    if (isFilled && plantEmoji) {
+    // Render SVG plant icon for filled days
+    if (isFilled && PlantIcon) {
+        const iconSize = Layout.grid.dotSize + 4;
         return (
             <TouchableOpacity
                 onPress={onPress}
@@ -67,19 +55,46 @@ const DayDotComponent: React.FC<DayDotProps> = ({
                 disabled={disabled}
                 activeOpacity={0.7}
             >
-                <Animated.View style={[styles.emojiContainer, animatedStyle]}>
-                    <Text style={styles.emoji}>{plantEmoji}</Text>
-                </Animated.View>
+                <View style={styles.iconContainer}>
+                    <PlantIcon
+                        width={iconSize}
+                        height={iconSize}
+                        color={Colors.dark.plantGreen}
+                        strokeWidth={1.5}
+                    />
+                </View>
             </TouchableOpacity>
         );
     }
 
-    // Empty dot styling
-    const getDotColor = () => {
-        if (isToday) return Colors.dark.dotHighlight; // Bright white for today
-        if (isFuture) return Colors.dark.dotEmpty;
-        return Colors.dark.dotEmpty;
+    // Get dot appearance based on state
+    const getDotStyle = () => {
+        if (isToday) {
+            return {
+                backgroundColor: Colors.dark.dotHighlight,
+                opacity: 1,
+                width: Layout.grid.dotSize + 2,
+                height: Layout.grid.dotSize + 2,
+            };
+        }
+        if (isFuture) {
+            return {
+                backgroundColor: Colors.dark.dotFuture,
+                opacity: 0.25,
+                width: Layout.grid.dotSize - 2,
+                height: Layout.grid.dotSize - 2,
+            };
+        }
+        // Past empty
+        return {
+            backgroundColor: Colors.dark.dotPast,
+            opacity: 0.5,
+            width: Layout.grid.dotSize,
+            height: Layout.grid.dotSize,
+        };
     };
+
+    const dotStyle = getDotStyle();
 
     return (
         <TouchableOpacity
@@ -91,8 +106,14 @@ const DayDotComponent: React.FC<DayDotProps> = ({
             <Animated.View
                 style={[
                     styles.dot,
-                    animatedStyle,
-                    { backgroundColor: getDotColor() },
+                    animatedDotStyle,
+                    {
+                        backgroundColor: dotStyle.backgroundColor,
+                        opacity: dotStyle.opacity,
+                        width: dotStyle.width,
+                        height: dotStyle.height,
+                        borderRadius: dotStyle.width / 2,
+                    },
                     isToday && styles.todayDot,
                 ]}
             />
@@ -100,7 +121,6 @@ const DayDotComponent: React.FC<DayDotProps> = ({
     );
 };
 
-// Memoize to prevent unnecessary re-renders
 export const DayDot = memo(DayDotComponent);
 
 const styles = StyleSheet.create({
@@ -111,26 +131,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     dot: {
-        width: Layout.grid.dotSize,
-        height: Layout.grid.dotSize,
-        borderRadius: Layout.grid.dotSize / 2,
+        // Size set dynamically
     },
     todayDot: {
-        // Glow effect for today
         shadowColor: Colors.dark.dotHighlight,
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 1,
-        shadowRadius: 12,
-        elevation: 15,
+        shadowRadius: 10,
+        elevation: 12,
     },
-    emojiContainer: {
-        width: Layout.grid.dotSize + 4,
-        height: Layout.grid.dotSize + 4,
+    iconContainer: {
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    emoji: {
-        fontSize: Layout.grid.dotSize - 2,
-        textAlign: 'center',
     },
 });

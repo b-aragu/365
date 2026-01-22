@@ -1,9 +1,10 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import { View, FlatList, StyleSheet, Text } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { DayDot } from './DayDot';
 import { generateYearDays } from '@/utils/dateUtils';
 import { JournalEntry } from '@/types';
 import { Layout } from '@/constants/Layout';
+import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
 
 interface YearGridProps {
     year: number;
@@ -11,29 +12,11 @@ interface YearGridProps {
     onDayPress: (date: string) => void;
 }
 
-// Plant ID to Emoji mapping
-const PLANT_EMOJI: Record<string, string> = {
-    'tree-pine': '🌲',
-    'seedling': '🌱',
-    'potted-soil': '🪴',
-    'potted-leaf': '🌿',
-    'flower-daisy': '🌼',
-    'rose-tulip': '🌷',
-    'lavender': '💜',
-    'bush-cloud': '☁️',
-    'monstera': '🍃',
-    'fern': '🌾',
-    'cactus-pot': '🌵',
-    'succulent': '🪷',
-    'herb-basil': '🌿',
-    'watering-plant': '💧',
-    'hands-plant': '🤲',
-    'leaf-branch': '🍂',
-};
-
-const getPlantEmoji = (plantId?: string): string => {
-    if (!plantId) return '🌱';
-    return PLANT_EMOJI[plantId] || '🌱';
+// Get plant component by ID
+const getPlantComponent = (plantId?: string) => {
+    if (!plantId) return PLANT_ICONS_LIST[0]?.component;
+    const found = PLANT_ICONS_LIST.find(p => p.id === plantId);
+    return found?.component || PLANT_ICONS_LIST[0]?.component;
 };
 
 // Memoized DayDot for performance
@@ -41,14 +24,6 @@ const MemoizedDayDot = memo(DayDot);
 
 export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress }) => {
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
-    const todayDayOfYear = useMemo(() => {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), 0, 0);
-        const diff = now.getTime() - start.getTime();
-        const oneDay = 1000 * 60 * 60 * 24;
-        return Math.floor(diff / oneDay);
-    }, []);
-
     const days = useMemo(() => generateYearDays(year), [year]);
 
     // Create a map for O(1) entry lookup
@@ -64,27 +39,21 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
         }
     }, [onDayPress]);
 
-    const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
+    const renderItem = useCallback(({ item }: { item: any }) => {
         const entry = entryMap.get(item.date);
         const isToday = item.date === today;
         const isFuture = item.date > today;
-        const dayNumber = index + 1;
 
-        // Brightness based on position relative to today
-        // Past: medium-bright, Today: full bright, Future: faded
-        let brightness: 'past' | 'today' | 'future' = 'past';
-        if (isToday) brightness = 'today';
-        else if (isFuture) brightness = 'future';
+        // Get SVG component for filled days
+        const PlantComponent = entry ? getPlantComponent(entry.plantIconId) : undefined;
 
         return (
             <MemoizedDayDot
                 date={item.date}
-                dayNumber={dayNumber}
                 isFilled={!!entry}
                 isToday={isToday}
                 isFuture={isFuture}
-                brightness={brightness}
-                plantEmoji={entry ? getPlantEmoji(entry.plantIconId) : undefined}
+                PlantIcon={PlantComponent}
                 onPress={() => handleDayPress(item.date, isFuture)}
                 disabled={isFuture}
             />
@@ -103,7 +72,6 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
                 contentContainerStyle={styles.gridContent}
                 columnWrapperStyle={styles.row}
                 showsVerticalScrollIndicator={false}
-                // Performance optimizations
                 removeClippedSubviews={true}
                 initialNumToRender={100}
                 maxToRenderPerBatch={50}

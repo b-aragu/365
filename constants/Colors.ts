@@ -15,8 +15,11 @@ export const Colors = {
         plantGreen: '#4CAF50',
         plantGreenLight: '#7ED957',
         plantGreenDark: '#2E7D32',
-        dotEmpty: '#222222', // Darker for subtlety
-        dotHighlight: '#FFFFFF', // Bright white for today
+        // Dot states
+        dotEmpty: '#444444',       // Visible gray for empty dots
+        dotHighlight: '#FFFFFF',   // Bright white for today
+        dotPast: '#555555',        // Past empty (medium gray)
+        dotFuture: '#222222',      // Future (very dim)
     },
 };
 

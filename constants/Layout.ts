@@ -9,8 +9,8 @@ export const Layout = {
     },
     grid: {
         padding: 16,
-        dotSize: 14, // Larger for better visibility
-        dotSpacing: 6, // Tighter spacing
+        dotSize: 10, // Smaller for 365 grid density
+        dotSpacing: 6,
         maxDotsPerRow: 18,
     },
     spacing: {
