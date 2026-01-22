@@ -7,14 +7,13 @@ import { useJournalEntries } from '@/hooks/useJournalEntries';
 import { Colors } from '@/constants/Colors';
 import { getEntryByDate } from '@/utils/storage';
 import { JournalEntry } from '@/types';
-import { getDayOfYear, isLeapYear } from '@/utils/dateUtils';
+import { getDayOfYear } from '@/utils/dateUtils';
 import { FloatingDock } from '@/components/FloatingDock';
-import * as crypto from 'crypto';
 
 export default function JournalPage() {
     const { date } = useLocalSearchParams<{ date: string }>();
     const router = useRouter();
-    const { addEntry, refreshEntries } = useJournalEntries();
+    const { addEntry } = useJournalEntries();
     const [entry, setEntry] = useState<JournalEntry | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -32,8 +31,6 @@ export default function JournalPage() {
     const handleSave = async (content: string, iconId: string) => {
         if (!date) return;
 
-        // We generated UUIDs previously but crypto.randomUUID isn't available in standard RN environment easily without polyfill
-        // For now simple random ID for MVP
         const id = entry?.id || Math.random().toString(36).substring(2, 15);
         const year = new Date(date).getFullYear();
 
@@ -51,44 +48,42 @@ export default function JournalPage() {
         };
 
         await addEntry(newEntry);
-        // Do not go back automatically - allow user to stay in "Zen Mode"
     };
 
     const handleDelete = async () => {
         // Implement delete
     };
 
-    if (loading) {
-        return (
-            <SafeAreaView style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={Colors.dark.accent} />
-            </SafeAreaView>
-        );
-    }
+    const handleTabPress = (tab: 'year' | 'journal' | 'settings') => {
+        if (tab === 'year') {
+            router.replace('/');
+        }
+    };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <>
+            {/* Always hide the header */}
             <Stack.Screen options={{ headerShown: false }} />
-            <JournalEditor
-                date={date}
-                initialContent={entry?.content}
-                initialIconId={entry?.plantIconId}
-                onSave={handleSave}
-                onDelete={handleDelete}
-                isNewEntry={!entry}
-            />
-            {/* Dock is now part of the page layout to handle navigation */}
-            <FloatingDock
-                activeTab="journal"
-                onTabPress={(tab) => {
-                    if (tab === 'year') {
-                        // Navigate back to grid
-                        router.dismissAll(); // Or navigate('/')
-                        router.replace('/');
-                    }
-                }}
-            />
-        </SafeAreaView>
+
+            <SafeAreaView style={styles.container}>
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={Colors.dark.accent} />
+                    </View>
+                ) : (
+                    <JournalEditor
+                        date={date}
+                        initialContent={entry?.content}
+                        initialIconId={entry?.plantIconId}
+                        onSave={handleSave}
+                        onDelete={handleDelete}
+                        isNewEntry={!entry}
+                    />
+                )}
+
+                <FloatingDock activeTab="journal" onTabPress={handleTabPress} />
+            </SafeAreaView>
+        </>
     );
 }
 
