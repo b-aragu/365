@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initDatabase } from '@/utils/storage';
+import { initializeNotifications } from '@/utils/notifications';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -29,10 +30,11 @@ export default function RootLayout() {
     const router = useRouter();
     const segments = useSegments();
 
-    // Initialize database on app start
+    // Initialize database and notifications on app start
     useEffect(() => {
         const init = async () => {
             await initDatabase();
+            await initializeNotifications();
             setDbReady(true);
         };
         init();

@@ -19,7 +19,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.anonymous.plantmemory"
+      "package": "com.baragu.plantmemory"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,7 +27,30 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4CAF50"
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "YearWidget",
+              "label": "365 Days Left",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "description": "Shows your year progress",
+              "previewImage": "./assets/widget-preview.png",
+              "resizeMode": "none"
+            }
+          ]
+        }
+      ]
     ],
     "scheme": "plantmemory",
     "experiments": {
