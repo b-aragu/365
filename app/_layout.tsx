@@ -76,7 +76,6 @@ export default function RootLayout() {
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen name="settings" options={{ headerShown: false }} />
                     <Stack.Screen name="journal/[date]" options={{ headerShown: false }} />
-                    <Stack.Screen name="+not-found" />
                 </Stack>
                 <StatusBar style="light" />
             </ThemeProvider>
