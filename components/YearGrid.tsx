@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, Text } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { DayDot } from './DayDot';
 import { generateYearDays } from '@/utils/dateUtils';
 import { JournalEntry } from '@/types';
 import { Layout } from '@/constants/Layout';
-import { Colors } from '@/constants/Colors';
+import { getPlantColor } from '@/constants/PlantColors';
 
 interface YearGridProps {
     year: number;
@@ -19,17 +19,27 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
     const renderItem = ({ item }: { item: any }) => {
         const entry = entries.find(e => e.date === item.date);
         const isToday = item.date === today;
+        const isFuture = item.date > today;
+        const isPast = item.date < today;
 
-        // Simple color logic for now, using a default if no plant color logic yet
-        const plantColor = entry ? Colors.dark.plantGreen : undefined;
+        // Get plant-specific color if entry exists
+        const plantColor = entry ? getPlantColor(entry.plantIconId) : undefined;
 
         return (
             <DayDot
                 date={item.date}
                 isFilled={!!entry}
                 isToday={isToday}
+                isFuture={isFuture}
+                isPast={isPast}
                 plantColor={plantColor}
-                onPress={() => onDayPress(item.date)}
+                onPress={() => {
+                    // Only allow press for today or past days with entries
+                    if (!isFuture) {
+                        onDayPress(item.date);
+                    }
+                }}
+                disabled={isFuture}
             />
         );
     };
@@ -44,6 +54,9 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
                 contentContainerStyle={styles.gridContent}
                 columnWrapperStyle={styles.row}
                 showsVerticalScrollIndicator={false}
+                initialNumToRender={50}
+                maxToRenderPerBatch={30}
+                windowSize={5}
             />
         </View>
     );

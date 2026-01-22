@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring, withTiming, withRepeat, withSequence, useSharedValue } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
@@ -8,62 +8,67 @@ interface DayDotProps {
     date: string;
     isFilled: boolean;
     isToday: boolean;
+    isFuture?: boolean;
+    isPast?: boolean;
     onPress: () => void;
     plantColor?: string;
+    disabled?: boolean;
 }
 
-export const DayDot: React.FC<DayDotProps> = ({ isFilled, isToday, onPress, plantColor }) => {
-    // Pulse animation for "Today"
-    const pulseAnim = useAnimatedStyle(() => {
-        return {
-            transform: [
-                { scale: withSpring(isFilled ? 1 : 0.8) }, // Base scale logic
-            ],
-            opacity: withTiming(isFilled ? 1 : 0.6),
-        };
-    });
-
-    // Let's stick to Reanimated for consistency
+export const DayDot: React.FC<DayDotProps> = ({
+    isFilled,
+    isToday,
+    isFuture = false,
+    onPress,
+    plantColor,
+    disabled = false
+}) => {
     const pulseScale = useSharedValue(1);
 
     React.useEffect(() => {
         if (isToday) {
             pulseScale.value = withRepeat(
                 withSequence(
-                    withTiming(1.2, { duration: 1000 }),
-                    withTiming(1, { duration: 1000 })
+                    withTiming(1.3, { duration: 1200 }),
+                    withTiming(1, { duration: 1200 })
                 ),
-                -1, // Infinite
-                true // Reverse
+                -1,
+                true
             );
         }
     }, [isToday]);
 
     const animatedStyle = useAnimatedStyle(() => {
+        // Future dates are very faded
+        const futureOpacity = 0.15;
+        const filledOpacity = 1;
+        const emptyOpacity = 0.4;
+
         return {
             transform: [
-                { scale: isToday ? pulseScale.value : withSpring(isFilled ? 1 : 0.8) }
+                { scale: isToday ? pulseScale.value : withSpring(isFilled ? 1 : 0.85) }
             ],
-            opacity: withTiming(isFilled ? 1 : 0.6),
-            backgroundColor: isToday ? Colors.dark.dotHighlight : (isFilled ? (plantColor || Colors.dark.plantGreen) : Colors.dark.dotEmpty),
-            borderColor: 'transparent',
-            borderWidth: 0,
+            opacity: isFuture ? futureOpacity : withTiming(isFilled ? filledOpacity : emptyOpacity),
+            backgroundColor: isToday
+                ? Colors.dark.dotHighlight
+                : (isFilled ? (plantColor || Colors.dark.plantGreen) : Colors.dark.dotEmpty),
+            // Glow effect for today
             shadowColor: isToday ? Colors.dark.dotHighlight : 'transparent',
             shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: isToday ? 0.8 : 0,
-            shadowRadius: isToday ? 8 : 0,
-            elevation: isToday ? 10 : 0,
+            shadowOpacity: isToday ? 0.9 : 0,
+            shadowRadius: isToday ? 10 : 0,
+            elevation: isToday ? 12 : 0,
         };
     });
 
     return (
-        <TouchableOpacity onPress={onPress} style={styles.container}>
-            <Animated.View
-                style={[
-                    styles.dot,
-                    animatedStyle
-                ]}
-            />
+        <TouchableOpacity
+            onPress={onPress}
+            style={styles.container}
+            disabled={disabled}
+            activeOpacity={disabled ? 1 : 0.7}
+        >
+            <Animated.View style={[styles.dot, animatedStyle]} />
         </TouchableOpacity>
     );
 };

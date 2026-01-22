@@ -1,17 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import Animated, { FadeIn, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback, ScrollView } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
-import { Svg, Path } from 'react-native-svg';
-
-// Decorative Sparkle Icon
-const SparkleIcon = () => (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <Path d="M12 2L14.39 9.61L22 12L14.39 14.39L12 22L9.61 14.39L2 12L9.61 9.61L12 2Z" fill={Colors.dark.textTertiary} opacity={0.5} />
-    </Svg>
-);
+import { getPlantColor } from '@/constants/PlantColors';
 
 interface JournalEditorProps {
     date: string;
@@ -20,37 +13,51 @@ interface JournalEditorProps {
     onSave: (content: string, iconId: string) => Promise<void>;
     onDelete: () => Promise<void>;
     isNewEntry: boolean;
+    readOnly?: boolean;
 }
 
 export const JournalEditor: React.FC<JournalEditorProps> = ({
+    date,
     initialContent = '',
     initialIconId,
     onSave,
+    readOnly = false,
 }) => {
     const [content, setContent] = useState(initialContent);
     const [iconId, setIconId] = useState<string | undefined>(initialIconId || PLANT_ICONS_LIST[0].id);
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Auto-save logic
+    // Format date for display
+    const formattedDate = React.useMemo(() => {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric'
+        });
+    }, [date]);
+
+    // Auto-save logic (only when not read-only)
     useEffect(() => {
+        if (readOnly) return;
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
-        // Save after 1 second of inactivity if content exists
         if (content.trim()) {
             saveTimeoutRef.current = setTimeout(() => {
                 onSave(content, iconId || PLANT_ICONS_LIST[0].id);
-            }, 1000);
+            }, 1500);
         }
 
         return () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         };
-    }, [content, iconId]);
+    }, [content, iconId, readOnly]);
 
-    // Cleanup save on unmount (ensure final state is saved)
+    // Cleanup save on unmount
     useEffect(() => {
         return () => {
-            if (content.trim()) {
+            if (!readOnly && content.trim()) {
                 onSave(content, iconId || PLANT_ICONS_LIST[0].id);
             }
         };
@@ -60,65 +67,100 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         Keyboard.dismiss();
     };
 
+    // Get the selected plant color for visual feedback
+    const selectedPlantColor = getPlantColor(iconId);
+
     return (
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
-            <Animated.View entering={FadeIn.duration(800)} style={styles.container}>
+            <Animated.View entering={FadeIn.duration(600)} style={styles.container}>
 
-                {/* Header: Edit Pill (Top Center) */}
-                <View style={styles.topArea}>
-                    <TouchableOpacity style={styles.editPill}>
-                        <Text style={styles.editPillText}>Edit</Text>
-                    </TouchableOpacity>
+                {/* Header */}
+                <View style={styles.header}>
+                    {/* Date Display */}
+                    <Text style={styles.dateText}>{formattedDate}</Text>
+
+                    {/* Mode Indicator */}
+                    <View style={[styles.modePill, readOnly && styles.readOnlyPill]}>
+                        <Text style={[styles.modeText, readOnly && styles.readOnlyText]}>
+                            {readOnly ? 'Memory' : 'Planting...'}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Inline Plant Selector (Subtle, delicately placed below header or integrated)
-                    User's image shows "Edit" at top, and previous images showed icons. 
-                    We will place them subtly below top area or keep them invisible until interaction? 
-                    Based on Image 0, they are visible. We'll keep them but style delicately under the pill.
-                */}
-                <View style={styles.plantSelectorContainer}>
-                    {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
-                        const isSelected = iconId === plant.id;
-                        const Icon = plant.component;
-                        return (
-                            <TouchableOpacity
-                                key={plant.id}
-                                onPress={() => setIconId(plant.id)}
-                                style={styles.iconWrapper}
-                                activeOpacity={0.7}
-                            >
-                                <Icon
-                                    width={32}
-                                    height={32}
-                                    color={isSelected ? Colors.dark.text : Colors.dark.textTertiary}
-                                    strokeWidth={1.5}
-                                    opacity={isSelected ? 1 : 0.3}
-                                />
-                                {/* No glow/dot, just opacity change for minimal zen feel */}
-                            </TouchableOpacity>
-                        );
-                    })}
+                {/* Plant Selector (hidden in read-only mode) */}
+                {!readOnly && (
+                    <View style={styles.plantSelectorContainer}>
+                        {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
+                            const isSelected = iconId === plant.id;
+                            const Icon = plant.component;
+                            const plantColor = getPlantColor(plant.id);
+                            return (
+                                <TouchableOpacity
+                                    key={plant.id}
+                                    onPress={() => setIconId(plant.id)}
+                                    style={[
+                                        styles.iconWrapper,
+                                        isSelected && { backgroundColor: `${plantColor}20` }
+                                    ]}
+                                    activeOpacity={0.7}
+                                >
+                                    <Icon
+                                        width={28}
+                                        height={28}
+                                        color={isSelected ? plantColor : Colors.dark.textTertiary}
+                                        strokeWidth={isSelected ? 2 : 1.5}
+                                        opacity={isSelected ? 1 : 0.4}
+                                    />
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                )}
+
+                {/* Selected Plant Indicator (for read-only) */}
+                {readOnly && iconId && (
+                    <View style={styles.readOnlyPlantContainer}>
+                        {(() => {
+                            const plant = PLANT_ICONS_LIST.find(p => p.id === iconId);
+                            if (!plant) return null;
+                            const Icon = plant.component;
+                            return (
+                                <View style={[styles.readOnlyPlantBadge, { backgroundColor: `${selectedPlantColor}20` }]}>
+                                    <Icon width={32} height={32} color={selectedPlantColor} strokeWidth={2} />
+                                </View>
+                            );
+                        })()}
+                    </View>
+                )}
+
+                {/* Content Area */}
+                <View style={styles.contentArea}>
+                    {readOnly ? (
+                        // Read-only: Display as text
+                        <ScrollView
+                            contentContainerStyle={styles.readOnlyContent}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            <Text style={styles.memoryText}>
+                                {content || 'No words were written...'}
+                            </Text>
+                        </ScrollView>
+                    ) : (
+                        // Editable: TextInput
+                        <TextInput
+                            style={styles.input}
+                            multiline
+                            placeholder="plant a memory..."
+                            placeholderTextColor="rgba(255,255,255,0.25)"
+                            value={content}
+                            onChangeText={setContent}
+                            textAlignVertical="top"
+                            selectionColor={selectedPlantColor}
+                        />
+                    )}
                 </View>
 
-
-                {/* Massive Whitespace Spacer */}
-                <View style={styles.spacer} />
-
-                {/* Input Area (Centered/Bottom-ish) */}
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        multiline
-                        placeholder="plant memory.."
-                        placeholderTextColor="rgba(255,255,255,0.2)" // Very subtle
-                        value={content}
-                        onChangeText={setContent}
-                        textAlignVertical="center" // Center vertically in its container
-                        selectionColor={Colors.dark.accent}
-                    />
-                </View>
-
-                {/* Bottom Spacer to push input up a bit */}
+                {/* Bottom Spacer for Dock */}
                 <View style={styles.bottomSpacer} />
 
             </Animated.View>
@@ -130,58 +172,83 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: Layout.spacing.lg,
-        paddingTop: Layout.spacing.xl,
+        paddingTop: Layout.spacing.lg,
     },
-    topArea: {
-        alignItems: 'center', // Center the Edit pill
-        marginTop: 10,
-        marginBottom: 20,
+    header: {
+        alignItems: 'center',
+        marginBottom: 24,
+        gap: 8,
+    },
+    dateText: {
+        color: Colors.dark.textSecondary,
+        fontSize: 14,
+        fontFamily: 'Inter_400Regular',
+        letterSpacing: 0.5,
+    },
+    modePill: {
+        backgroundColor: Colors.dark.accent,
+        paddingVertical: 6,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+    },
+    readOnlyPill: {
+        backgroundColor: Colors.dark.backgroundElevated,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    modeText: {
+        color: Colors.dark.background,
+        fontSize: 12,
+        fontFamily: 'Inter_600SemiBold',
+    },
+    readOnlyText: {
+        color: Colors.dark.textSecondary,
     },
     plantSelectorContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 32,
+        gap: 20,
+        marginBottom: 24,
     },
     iconWrapper: {
         alignItems: 'center',
         justifyContent: 'center',
-        height: 44,
-        width: 44,
+        height: 48,
+        width: 48,
+        borderRadius: 24,
     },
-    editPill: {
-        backgroundColor: Colors.dark.text, // White pill
-        paddingVertical: 8, // Slightly taller
-        paddingHorizontal: 20,
-        borderRadius: 20,
+    readOnlyPlantContainer: {
+        alignItems: 'center',
+        marginBottom: 24,
     },
-    editPillText: {
-        color: Colors.dark.background,
-        fontFamily: 'Inter_600SemiBold',
-        fontSize: 12,
+    readOnlyPlantBadge: {
+        padding: 16,
+        borderRadius: 32,
     },
-    spacer: {
+    contentArea: {
         flex: 1,
-    },
-    inputContainer: {
-        height: 150, // Fixed height for input area
-        justifyContent: 'center',
-        marginBottom: 100, // Leave room for Dock
+        marginBottom: 20,
     },
     input: {
+        flex: 1,
         color: Colors.dark.text,
-        fontSize: 16,
+        fontSize: 18,
         fontFamily: 'Inter_400Regular',
-        lineHeight: 24,
-        textAlign: 'center', // Center text alignment "plant memory.."
+        lineHeight: 28,
+        paddingHorizontal: 8,
+    },
+    readOnlyContent: {
+        flexGrow: 1,
+        paddingHorizontal: 8,
+    },
+    memoryText: {
+        color: Colors.dark.text,
+        fontSize: 18,
+        fontFamily: 'Inter_400Regular',
+        lineHeight: 28,
+        fontStyle: 'italic',
     },
     bottomSpacer: {
-        height: 80, // Space for Dock
+        height: 100,
     },
-    selectionGlow: {
-        // Unused now
-        position: 'absolute',
-    },
-    sparkleContainer: {
-        // Moved to external
-    }
 });
