@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, TextInput, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { Svg, Path } from 'react-native-svg';
 import { Colors } from '@/constants/Colors';
-import { Layout } from '@/constants/Layout';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
+import { areNotificationsEnabled, setNotificationsEnabled } from '@/utils/notifications';
 
 // Icons
 const BackIcon = ({ size = 24, color = Colors.dark.text }) => (
@@ -26,19 +26,37 @@ const MailIcon = ({ size = 20, color = Colors.dark.textSecondary }) => (
     </Svg>
 );
 
+const BellIcon = ({ size = 20, color = Colors.dark.textSecondary }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M18 8A6 6 0 1 0 6 8C6 15 3 17 3 17H21S18 15 18 8ZM13.73 21A2 2 0 1 1 10.27 21" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+);
+
 export default function SettingsScreen() {
     const router = useRouter();
     const { entries } = useJournalEntries();
     const [hapticEnabled, setHapticEnabled] = useState(true);
+    const [notificationsOn, setNotificationsOn] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
     const [feedbackText, setFeedbackText] = useState('');
+
+    // Load notification setting
+    useEffect(() => {
+        areNotificationsEnabled().then(setNotificationsOn);
+    }, []);
 
     const handleBack = () => router.back();
     const totalWords = entries.reduce((acc, e) => acc + (e.wordCount || 0), 0);
 
-    const openGithub = () => {
-        Linking.openURL('https://github.com/b-aragu/365');
+    const handleNotificationToggle = async (value: boolean) => {
+        setNotificationsOn(value);
+        await setNotificationsEnabled(value);
+        if (value) {
+            Alert.alert('Reminders On', 'You\'ll get a reminder at 8 PM daily.');
+        }
     };
+
+    const openGithub = () => Linking.openURL('https://github.com/b-aragu/365');
 
     const sendFeedback = () => {
         if (!feedbackText.trim()) {
@@ -50,7 +68,6 @@ export default function SettingsScreen() {
         Linking.openURL(`mailto:baraguantonyy@gmail.com?subject=${subject}&body=${body}`);
         setFeedbackText('');
         setShowFeedback(false);
-        Alert.alert('Thank you!', 'Your email app should open to send feedback.');
     };
 
     return (
@@ -84,7 +101,26 @@ export default function SettingsScreen() {
                     {/* Preferences */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Preferences</Text>
+
+                        {/* Daily Reminder */}
                         <View style={styles.settingRow}>
+                            <View style={styles.settingLeft}>
+                                <BellIcon />
+                                <View>
+                                    <Text style={styles.settingLabel}>Daily Reminder</Text>
+                                    <Text style={styles.settingDesc}>Remind me at 8 PM</Text>
+                                </View>
+                            </View>
+                            <Switch
+                                value={notificationsOn}
+                                onValueChange={handleNotificationToggle}
+                                trackColor={{ false: Colors.dark.border, true: Colors.dark.plantGreen }}
+                                thumbColor={Colors.dark.text}
+                            />
+                        </View>
+
+                        {/* Haptic */}
+                        <View style={[styles.settingRow, { marginTop: 8 }]}>
                             <View>
                                 <Text style={styles.settingLabel}>Haptic Feedback</Text>
                                 <Text style={styles.settingDesc}>Vibration when planting</Text>
@@ -174,6 +210,7 @@ const styles = StyleSheet.create({
     statNumber: { color: Colors.dark.text, fontSize: 28, fontFamily: 'Inter_700Bold', marginBottom: 4 },
     statLabel: { color: Colors.dark.textSecondary, fontSize: 13, fontFamily: 'Inter_400Regular' },
     settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: Colors.dark.backgroundElevated, padding: 16, borderRadius: 12 },
+    settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     settingLabel: { color: Colors.dark.text, fontSize: 15, fontFamily: 'Inter_500Medium' },
     settingDesc: { color: Colors.dark.textTertiary, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
     actionRow: { backgroundColor: Colors.dark.backgroundElevated, padding: 16, borderRadius: 12, marginBottom: 8 },

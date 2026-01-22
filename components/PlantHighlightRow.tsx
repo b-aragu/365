@@ -1,37 +1,37 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { DETAILED_PLANT_ICONS } from '@/assets/icons/plants';
+import { View, Text, StyleSheet } from 'react-native';
+import { useJournalEntries } from '@/hooks/useJournalEntries';
 import { Colors } from '@/constants/Colors';
 
 export const PlantHighlightRow = () => {
-    // Display 2 rows of icons (8 icons each)
-    const row1Icons = DETAILED_PLANT_ICONS.slice(0, 8);
-    const row2Icons = DETAILED_PLANT_ICONS.slice(8, 16);
+    const { entries } = useJournalEntries();
+
+    // Calculate progress for the year
+    const currentDayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const entriesThisYear = entries.filter(e => e.year === new Date().getFullYear()).length;
+    const progressPercent = currentDayOfYear > 0 ? Math.round((entriesThisYear / currentDayOfYear) * 100) : 0;
+
+    // Determine message based on progress
+    const getMessage = () => {
+        if (entriesThisYear === 0) return "Start your garden today";
+        if (progressPercent >= 90) return "🌟 Amazing consistency!";
+        if (progressPercent >= 70) return "🌿 Your garden is flourishing";
+        if (progressPercent >= 50) return "🌱 Keep growing";
+        return "🌱 Every memory counts";
+    };
 
     return (
         <View style={styles.container}>
-            {/* Row 1 */}
-            <View style={styles.row}>
-                {row1Icons.map((plant, index) => {
-                    const Icon = plant.component;
-                    return (
-                        <View key={plant.id} style={styles.iconWrapper}>
-                            <Icon width={24} height={24} color={Colors.dark.textSecondary} strokeWidth={1.2} />
-                        </View>
-                    );
-                })}
+            {/* Progress bar */}
+            <View style={styles.progressContainer}>
+                <View style={styles.progressBar}>
+                    <View style={[styles.progressFill, { width: `${Math.min(progressPercent, 100)}%` }]} />
+                </View>
+                <Text style={styles.progressText}>{entriesThisYear} / {currentDayOfYear} days</Text>
             </View>
-            {/* Row 2 */}
-            <View style={styles.row}>
-                {row2Icons.map((plant, index) => {
-                    const Icon = plant.component;
-                    return (
-                        <View key={plant.id} style={styles.iconWrapper}>
-                            <Icon width={24} height={24} color={Colors.dark.textSecondary} strokeWidth={1.2} />
-                        </View>
-                    );
-                })}
-            </View>
+
+            {/* Motivational message */}
+            <Text style={styles.message}>{getMessage()}</Text>
         </View>
     );
 };
@@ -39,16 +39,34 @@ export const PlantHighlightRow = () => {
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
+        paddingHorizontal: 40,
         gap: 8,
-        marginBottom: 16,
-        opacity: 0.7,
     },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 16,
+    progressContainer: {
+        width: '100%',
+        gap: 4,
     },
-    iconWrapper: {
-        // Optional padding for touch targets if interactive
-    }
+    progressBar: {
+        height: 4,
+        backgroundColor: Colors.dark.border,
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: '100%',
+        backgroundColor: Colors.dark.plantGreen,
+        borderRadius: 2,
+    },
+    progressText: {
+        color: Colors.dark.textTertiary,
+        fontSize: 11,
+        fontFamily: 'Inter_400Regular',
+        textAlign: 'center',
+    },
+    message: {
+        color: Colors.dark.textSecondary,
+        fontSize: 12,
+        fontFamily: 'Inter_500Medium',
+        textAlign: 'center',
+    },
 });
