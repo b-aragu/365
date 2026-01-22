@@ -8,6 +8,7 @@ import { Colors } from '@/constants/Colors';
 import { getEntryByDate } from '@/utils/storage';
 import { JournalEntry } from '@/types';
 import { getDayOfYear, isLeapYear } from '@/utils/dateUtils';
+import { FloatingDock } from '@/components/FloatingDock';
 import * as crypto from 'crypto';
 
 export default function JournalPage() {
@@ -50,15 +51,11 @@ export default function JournalPage() {
         };
 
         await addEntry(newEntry);
-        router.back();
+        // Do not go back automatically - allow user to stay in "Zen Mode"
     };
 
     const handleDelete = async () => {
-        // Implement delete logic utilizing hooks or storage direct
-        // For MVP just clearing content or explicit delete function in storage
-        // To keep it simple, we will implement delete in storage.ts later or just overwrite with empty if permitted
-        // For now, let's just go back
-        router.back();
+        // Implement delete
     };
 
     if (loading) {
@@ -79,6 +76,17 @@ export default function JournalPage() {
                 onSave={handleSave}
                 onDelete={handleDelete}
                 isNewEntry={!entry}
+            />
+            {/* Dock is now part of the page layout to handle navigation */}
+            <FloatingDock
+                activeTab="journal"
+                onTabPress={(tab) => {
+                    if (tab === 'year') {
+                        // Navigate back to grid
+                        router.dismissAll(); // Or navigate('/')
+                        router.replace('/');
+                    }
+                }}
             />
         </SafeAreaView>
     );

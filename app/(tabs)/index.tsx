@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,16 @@ import { getDaysRemaining } from '@/utils/dateUtils';
 import { PlantHighlightRow } from '@/components/PlantHighlightRow';
 import { FloatingDock } from '@/components/FloatingDock';
 
+// Rotating quotes for the footer
+const QUOTES = [
+    "I knew all the rules but the rules did not know me",
+    "Every day is a seed waiting to grow",
+    "Plant your thoughts, harvest your peace",
+    "Growth is silent but powerful",
+    "One memory at a time",
+    "The best time to plant was yesterday",
+];
+
 export default function HomeScreen() {
     const { entries } = useJournalEntries();
     const currentYear = new Date().getFullYear();
@@ -16,6 +26,9 @@ export default function HomeScreen() {
 
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'year' | 'journal' | 'settings'>('year');
+
+    // Pick a random quote on mount
+    const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
 
     const handleDayPress = (date: string) => {
         router.push(`/journal/${date}`);
@@ -54,8 +67,7 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.footer}>
-                <Text style={styles.quote}>"I PLANT A MEMORY A DAY"</Text>
-                <Text style={styles.subQuote}>plant memory..</Text>
+                <Text style={styles.quote}>{quote}</Text>
             </View>
 
             <FloatingDock activeTab={activeTab} onTabPress={handleTabPress} />
@@ -87,7 +99,7 @@ const styles = StyleSheet.create({
     },
     iconRowContainer: {
         marginBottom: 10,
-        height: 40,
+        height: 80, // Taller to fit 2 rows of icons
         justifyContent: 'center',
     },
     gridContainer: {

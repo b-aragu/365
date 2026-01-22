@@ -29,7 +29,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
 }) => {
     const [content, setContent] = useState(initialContent);
     const [iconId, setIconId] = useState<string | undefined>(initialIconId || PLANT_ICONS_LIST[0].id);
-    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Auto-save logic
     useEffect(() => {
@@ -64,61 +64,62 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
             <Animated.View entering={FadeIn.duration(800)} style={styles.container}>
 
-                {/* Header: Icons + Edit Pill */}
+                {/* Header: Edit Pill (Top Center) */}
                 <View style={styles.topArea}>
-                    <View style={styles.plantSelector}>
-                        {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
-                            const isSelected = iconId === plant.id;
-                            const Icon = plant.component;
-                            return (
-                                <TouchableOpacity
-                                    key={plant.id}
-                                    onPress={() => setIconId(plant.id)}
-                                    style={styles.iconWrapper}
-                                    activeOpacity={0.7}
-                                >
-                                    <Icon
-                                        width={32} // Slightly larger
-                                        height={32}
-                                        color={isSelected ? Colors.dark.text : Colors.dark.textTertiary}
-                                        strokeWidth={isSelected ? 2 : 1.5}
-                                        opacity={isSelected ? 1 : 0.4} // Dim unselected
-                                    />
-                                    {/* Subtler glow for selected, NO dot */}
-                                    {isSelected && <Animated.View entering={FadeIn} style={styles.selectionGlow} />}
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-
                     <TouchableOpacity style={styles.editPill}>
                         <Text style={styles.editPillText}>Edit</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Massive Whitespace - Push Input DOWN to bottom third */}
+                {/* Inline Plant Selector (Subtle, delicately placed below header or integrated)
+                    User's image shows "Edit" at top, and previous images showed icons. 
+                    We will place them subtly below top area or keep them invisible until interaction? 
+                    Based on Image 0, they are visible. We'll keep them but style delicately under the pill.
+                */}
+                <View style={styles.plantSelectorContainer}>
+                    {PLANT_ICONS_LIST.slice(0, 4).map((plant) => {
+                        const isSelected = iconId === plant.id;
+                        const Icon = plant.component;
+                        return (
+                            <TouchableOpacity
+                                key={plant.id}
+                                onPress={() => setIconId(plant.id)}
+                                style={styles.iconWrapper}
+                                activeOpacity={0.7}
+                            >
+                                <Icon
+                                    width={32}
+                                    height={32}
+                                    color={isSelected ? Colors.dark.text : Colors.dark.textTertiary}
+                                    strokeWidth={1.5}
+                                    opacity={isSelected ? 1 : 0.3}
+                                />
+                                {/* No glow/dot, just opacity change for minimal zen feel */}
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+
+
+                {/* Massive Whitespace Spacer */}
                 <View style={styles.spacer} />
 
-                {/* Input Area */}
+                {/* Input Area (Centered/Bottom-ish) */}
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
                         multiline
                         placeholder="plant memory.."
-                        placeholderTextColor={Colors.dark.textTertiary}
+                        placeholderTextColor="rgba(255,255,255,0.2)" // Very subtle
                         value={content}
                         onChangeText={setContent}
-                        textAlignVertical="bottom" // Typing starts at bottom
+                        textAlignVertical="center" // Center vertically in its container
                         selectionColor={Colors.dark.accent}
                     />
                 </View>
 
-                {/* Bottom Decorative Area */}
-                <View style={styles.bottomArea}>
-                    <View style={styles.sparkleContainer}>
-                        <SparkleIcon />
-                    </View>
-                </View>
+                {/* Bottom Spacer to push input up a bit */}
+                <View style={styles.bottomSpacer} />
 
             </Animated.View>
         </TouchableWithoutFeedback>
@@ -132,14 +133,14 @@ const styles = StyleSheet.create({
         paddingTop: Layout.spacing.xl,
     },
     topArea: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginTop: 20,
+        alignItems: 'center', // Center the Edit pill
+        marginTop: 10,
+        marginBottom: 20,
     },
-    plantSelector: {
+    plantSelectorContainer: {
         flexDirection: 'row',
-        gap: 32, // Generous spacing
+        justifyContent: 'center',
+        gap: 32,
     },
     iconWrapper: {
         alignItems: 'center',
@@ -147,52 +148,40 @@ const styles = StyleSheet.create({
         height: 44,
         width: 44,
     },
-    selectionGlow: {
-        position: 'absolute',
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: Colors.dark.text,
-        opacity: 0.1, // Very subtle glow bloom behind
-        zIndex: -1,
-    },
     editPill: {
-        backgroundColor: Colors.dark.backgroundElevated, // Less prominent
-        paddingVertical: 6,
-        paddingHorizontal: 12,
+        backgroundColor: Colors.dark.text, // White pill
+        paddingVertical: 8, // Slightly taller
+        paddingHorizontal: 20,
         borderRadius: 20,
-        opacity: 0.8,
     },
     editPillText: {
-        color: Colors.dark.text,
-        fontFamily: 'Inter_500Medium',
+        color: Colors.dark.background,
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 12,
     },
     spacer: {
-        flex: 3, // Push everything down more
+        flex: 1,
     },
     inputContainer: {
-        flex: 2, // Taller input area
-        justifyContent: 'flex-end', // Align text to bottom of this section
-        marginBottom: 20,
-        paddingHorizontal: 8,
+        height: 150, // Fixed height for input area
+        justifyContent: 'center',
+        marginBottom: 100, // Leave room for Dock
     },
     input: {
         color: Colors.dark.text,
-        fontSize: 18,
+        fontSize: 16,
         fontFamily: 'Inter_400Regular',
-        lineHeight: 28,
-        minHeight: 120, // Taller touch target
+        lineHeight: 24,
+        textAlign: 'center', // Center text alignment "plant memory.."
     },
-    bottomArea: {
-        height: 80,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        paddingBottom: 20,
+    bottomSpacer: {
+        height: 80, // Space for Dock
+    },
+    selectionGlow: {
+        // Unused now
+        position: 'absolute',
     },
     sparkleContainer: {
-        opacity: 0.8,
-        padding: 8,
+        // Moved to external
     }
 });

@@ -1,36 +1,54 @@
 import React from 'react';
-import { View, StyleSheet, useColorScheme } from 'react-native';
-import { PlantIcons } from '@/assets/icons/plants';
+import { View, StyleSheet } from 'react-native';
+import { DETAILED_PLANT_ICONS } from '@/assets/icons/plants';
 import { Colors } from '@/constants/Colors';
 
-const ICONS_TO_SHOW = ['tree', 'sprout', 'flower', 'cactus'];
-
 export const PlantHighlightRow = () => {
+    // Display 2 rows of icons (8 icons each)
+    const row1Icons = DETAILED_PLANT_ICONS.slice(0, 8);
+    const row2Icons = DETAILED_PLANT_ICONS.slice(8, 16);
+
     return (
         <View style={styles.container}>
-            {ICONS_TO_SHOW.map((iconName, index) => {
-                // @ts-ignore
-                const Icon = PlantIcons[iconName];
-                return (
-                    <View key={index} style={styles.iconWrapper}>
-                        {Icon && <Icon width={32} height={32} color={Colors.dark.textSecondary} />}
-                    </View>
-                );
-            })}
+            {/* Row 1 */}
+            <View style={styles.row}>
+                {row1Icons.map((plant, index) => {
+                    const Icon = plant.component;
+                    return (
+                        <View key={plant.id} style={styles.iconWrapper}>
+                            <Icon width={24} height={24} color={Colors.dark.textSecondary} strokeWidth={1.2} />
+                        </View>
+                    );
+                })}
+            </View>
+            {/* Row 2 */}
+            <View style={styles.row}>
+                {row2Icons.map((plant, index) => {
+                    const Icon = plant.component;
+                    return (
+                        <View key={plant.id} style={styles.iconWrapper}>
+                            <Icon width={24} height={24} color={Colors.dark.textSecondary} strokeWidth={1.2} />
+                        </View>
+                    );
+                })}
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 16,
+        opacity: 0.7,
+    },
+    row: {
         flexDirection: 'row',
         justifyContent: 'center',
-        alignItems: 'center',
-        gap: 32, // Increased from 24
-        marginBottom: 20,
-        opacity: 0.8,
+        gap: 16,
     },
     iconWrapper: {
-        // Optional: specific styling if needed
+        // Optional padding for touch targets if interactive
     }
 });
