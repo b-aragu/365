@@ -54,7 +54,7 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
     const DOT_GAP = 1.5;
 
     // Colors
-    const COLOR_BG = '#0a0a0a';
+    const COLOR_BG = '#00000000'; // TRANSPARENT
     const COLOR_PAST = '#333333';
     const COLOR_TODAY = '#4CAF50';
     const COLOR_FUTURE = '#151515';
@@ -125,7 +125,7 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     width: '100%',
-                    marginTop: 8 // Slight margin from dots
+                    marginTop: 2 // Tighter spacing
                 }}
             >
                 <TextWidget
@@ -180,21 +180,21 @@ async function renderPlantGrowth(props: WidgetTaskHandlerProps) {
             }}
             clickAction="OPEN_APP"
         >
-            {/* Circle container for emoji - Made SMALLER */}
+            {/* Circle container for emoji - VERY SMALL */}
             <FlexWidget
                 style={{
-                    width: 48, // Reduced from 72
-                    height: 48, // Reduced from 72
-                    borderRadius: 24, // Reduced from 36
+                    width: 32, // Further reduced from 48
+                    height: 32, // Further reduced from 48
+                    borderRadius: 16, // Further reduced from 24
                     backgroundColor: '#151515',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginBottom: 8 // Reduced margin
+                    marginBottom: 4 // Reduced margin
                 }}
             >
                 <TextWidget
                     text={currentStage.emoji}
-                    style={{ fontSize: 24 }} // Reduced from 36
+                    style={{ fontSize: 16 }} // Reduced from 24
                 />
             </FlexWidget>
 
