@@ -30,24 +30,44 @@
       "expo-font",
       "expo-sqlite",
       [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#4CAF50"
-        }
-      ],
-      [
         "react-native-android-widget",
         {
           "widgets": [
             {
               "name": "YearWidget",
-              "label": "365 Days Left",
-              "minWidth": "250dp",
-              "minHeight": "110dp",
-              "description": "Shows your year progress",
+              "label": "365 Dot Grid",
+              "minWidth": "180dp",
+              "minHeight": "180dp",
+              "description": "Minimal dot grid showing year progress",
               "previewImage": "./assets/widget-preview.png",
-              "resizeMode": "none"
+              "resizeMode": "horizontal|vertical"
+            },
+            {
+              "name": "PlantGrowthWidget",
+              "label": "365 Plant Growth",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "description": "Watch your memory plant grow throughout the year",
+              "previewImage": "./assets/widget-preview.png",
+              "resizeMode": "horizontal|vertical"
+            },
+            {
+              "name": "CircularProgressWidget",
+              "label": "365 Progress",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "description": "Circular year progress indicator",
+              "previewImage": "./assets/widget-preview.png",
+              "resizeMode": "horizontal|vertical"
+            },
+            {
+              "name": "DaysStripWidget",
+              "label": "365 Week View",
+              "minWidth": "250dp",
+              "minHeight": "80dp",
+              "description": "Recent 7 days with your memory entries",
+              "previewImage": "./assets/widget-preview.png",
+              "resizeMode": "horizontal"
             }
           ]
         }

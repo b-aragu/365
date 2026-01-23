@@ -2,12 +2,20 @@ import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { JournalEntry } from '../types';
 
-// Open/create the database
-const db = SQLite.openDatabaseSync('plant365.db');
+// Lazy database initialization to prevent startup crashes
+let _db: SQLite.SQLiteDatabase | null = null;
+
+const getDb = (): SQLite.SQLiteDatabase => {
+    if (!_db) {
+        _db = SQLite.openDatabaseSync('plant365.db');
+    }
+    return _db;
+};
 
 // Initialize database tables
 export const initDatabase = async (): Promise<void> => {
     try {
+        const db = getDb();
         await db.execAsync(`
             CREATE TABLE IF NOT EXISTS entries (
                 id TEXT PRIMARY KEY,
@@ -27,6 +35,7 @@ export const initDatabase = async (): Promise<void> => {
         await migrateFromAsyncStorage();
     } catch (error) {
         console.error('Error initializing database:', error);
+        // Don't throw - allow app to continue even if DB fails
     }
 };
 
@@ -54,7 +63,7 @@ const migrateFromAsyncStorage = async (): Promise<void> => {
 // Save or update an entry
 export const saveEntry = async (entry: JournalEntry): Promise<void> => {
     try {
-        await db.runAsync(
+        await getDb().runAsync(
             `INSERT OR REPLACE INTO entries (id, date, content, plantIconId, wordCount, createdAt, updatedAt, year)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
@@ -77,7 +86,7 @@ export const saveEntry = async (entry: JournalEntry): Promise<void> => {
 // Get all entries
 export const getAllEntries = async (): Promise<JournalEntry[]> => {
     try {
-        const result = await db.getAllAsync<JournalEntry>('SELECT * FROM entries ORDER BY date DESC');
+        const result = await getDb().getAllAsync<JournalEntry>('SELECT * FROM entries ORDER BY date DESC');
         return result;
     } catch (error) {
         console.error('Error getting entries:', error);
@@ -88,7 +97,7 @@ export const getAllEntries = async (): Promise<JournalEntry[]> => {
 // Get entry by date
 export const getEntryByDate = async (date: string): Promise<JournalEntry | undefined> => {
     try {
-        const result = await db.getFirstAsync<JournalEntry>('SELECT * FROM entries WHERE date = ?', [date]);
+        const result = await getDb().getFirstAsync<JournalEntry>('SELECT * FROM entries WHERE date = ?', [date]);
         return result || undefined;
     } catch (error) {
         console.error('Error getting entry by date:', error);
@@ -99,7 +108,7 @@ export const getEntryByDate = async (date: string): Promise<JournalEntry | undef
 // Get entries for a specific year
 export const getEntriesByYear = async (year: number): Promise<JournalEntry[]> => {
     try {
-        const result = await db.getAllAsync<JournalEntry>('SELECT * FROM entries WHERE year = ? ORDER BY date', [year]);
+        const result = await getDb().getAllAsync<JournalEntry>('SELECT * FROM entries WHERE year = ? ORDER BY date', [year]);
         return result;
     } catch (error) {
         console.error('Error getting entries by year:', error);
@@ -110,7 +119,7 @@ export const getEntriesByYear = async (year: number): Promise<JournalEntry[]> =>
 // Delete an entry
 export const deleteEntry = async (id: string): Promise<void> => {
     try {
-        await db.runAsync('DELETE FROM entries WHERE id = ?', [id]);
+        await getDb().runAsync('DELETE FROM entries WHERE id = ?', [id]);
     } catch (error) {
         console.error('Error deleting entry:', error);
         throw error;
@@ -120,7 +129,7 @@ export const deleteEntry = async (id: string): Promise<void> => {
 // Clear all data (for testing/reset)
 export const clearAllData = async (): Promise<void> => {
     try {
-        await db.runAsync('DELETE FROM entries');
+        await getDb().runAsync('DELETE FROM entries');
         await AsyncStorage.removeItem('@365_migrated_to_sqlite');
     } catch (error) {
         console.error('Error clearing data:', error);
@@ -130,7 +139,7 @@ export const clearAllData = async (): Promise<void> => {
 // Get entry count
 export const getEntryCount = async (): Promise<number> => {
     try {
-        const result = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM entries');
+        const result = await getDb().getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM entries');
         return result?.count || 0;
     } catch (error) {
         console.error('Error getting entry count:', error);
@@ -141,7 +150,7 @@ export const getEntryCount = async (): Promise<number> => {
 // Get total words
 export const getTotalWords = async (): Promise<number> => {
     try {
-        const result = await db.getFirstAsync<{ total: number }>('SELECT SUM(wordCount) as total FROM entries');
+        const result = await getDb().getFirstAsync<{ total: number }>('SELECT SUM(wordCount) as total FROM entries');
         return result?.total || 0;
     } catch (error) {
         console.error('Error getting total words:', error);

@@ -7,16 +7,26 @@ import {
     Inter_600SemiBold,
     Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initDatabase } from '@/utils/storage';
-import { initializeNotifications } from '@/utils/notifications';
+// Register widget task handler
+import '@/widgets';
 
 // Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => { });
+
+// Fast screen transition config
+const screenOptions = {
+    headerShown: false,
+    animation: 'fade' as const,
+    animationDuration: 150,
+    gestureEnabled: true,
+    fullScreenGestureEnabled: true,
+};
 
 export default function RootLayout() {
     const [loaded] = useFonts({
@@ -25,62 +35,83 @@ export default function RootLayout() {
         Inter_600SemiBold,
         Inter_700Bold,
     });
+    const [appReady, setAppReady] = useState(false);
     const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
-    const [dbReady, setDbReady] = useState(false);
     const router = useRouter();
-    const segments = useSegments();
+    const initDone = useRef(false);
+    const navigationDone = useRef(false);
 
-    // Initialize database and notifications on app start
+    // Fast initialization with reduced timeout
     useEffect(() => {
-        const init = async () => {
-            await initDatabase();
-            await initializeNotifications();
-            setDbReady(true);
-        };
-        init();
-    }, []);
+        if (initDone.current) return;
+        initDone.current = true;
 
-    // Check onboarding status
-    useEffect(() => {
-        const checkOnboarding = async () => {
+        const initialize = async () => {
             try {
-                const value = await AsyncStorage.getItem('hasOnboarded');
-                setHasOnboarded(value === 'true');
-            } catch {
+                // Run init tasks with short timeout for snappy startup
+                const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1500));
+
+                const initTasks = Promise.all([
+                    initDatabase().catch(() => { }),
+                    AsyncStorage.getItem('hasOnboarded').then(val => {
+                        setHasOnboarded(val === 'true');
+                    }).catch(() => {
+                        setHasOnboarded(false);
+                    }),
+                ]);
+
+                await Promise.race([initTasks, timeout]);
+            } catch (error) {
                 setHasOnboarded(false);
             }
+
+            setAppReady(true);
         };
-        checkOnboarding();
+
+        initialize();
     }, []);
 
-    // Hide splash and navigate appropriately
+    // Navigate ONCE based on onboarding status
     useEffect(() => {
-        if (loaded && hasOnboarded !== null && dbReady) {
-            SplashScreen.hideAsync();
+        if (loaded && appReady && hasOnboarded !== null && !navigationDone.current) {
+            navigationDone.current = true;
+            SplashScreen.hideAsync().catch(() => { });
 
-            // If not onboarded and not already on onboarding, redirect
-            const isOnboardingRoute = segments[0] === 'onboarding';
-            if (!hasOnboarded && !isOnboardingRoute) {
+            if (!hasOnboarded) {
                 router.replace('/onboarding');
             }
         }
-    }, [loaded, hasOnboarded, dbReady, segments]);
+    }, [loaded, appReady, hasOnboarded, router]);
 
-    if (!loaded || hasOnboarded === null || !dbReady) {
+    // Force show after shorter timeout
+    useEffect(() => {
+        const forceShow = setTimeout(() => {
+            if (!appReady) {
+                setAppReady(true);
+                if (hasOnboarded === null) {
+                    setHasOnboarded(false);
+                }
+            }
+        }, 3000);
+        return () => clearTimeout(forceShow);
+    }, [appReady, hasOnboarded]);
+
+    if (!loaded && !appReady) {
         return null;
     }
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <ThemeProvider value={DarkTheme}>
-                <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="settings" options={{ headerShown: false }} />
-                    <Stack.Screen name="journal/[date]" options={{ headerShown: false }} />
+                <Stack screenOptions={screenOptions}>
+                    <Stack.Screen name="onboarding" />
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />
+                    <Stack.Screen name="journal/[date]" options={{ animation: 'slide_from_right' }} />
                 </Stack>
                 <StatusBar style="light" />
             </ThemeProvider>
         </GestureHandlerRootView>
     );
 }
+
