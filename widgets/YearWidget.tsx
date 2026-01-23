@@ -171,7 +171,7 @@ async function renderPlantGrowth(props: WidgetTaskHandlerProps) {
             style={{
                 height: 'match_parent',
                 width: 'match_parent',
-                backgroundColor: '#0a0a0a',
+                backgroundColor: '#00000000',
                 borderRadius: 22,
                 padding: 16,
                 flexDirection: 'column',
@@ -327,7 +327,7 @@ async function renderDaysStrip(props: WidgetTaskHandlerProps) {
             style={{
                 height: 'match_parent',
                 width: 'match_parent',
-                backgroundColor: '#0a0a0a',
+                backgroundColor: '#00000000',
                 borderRadius: 22,
                 padding: 12,
                 flexDirection: 'row',
@@ -373,7 +373,7 @@ async function renderCircularProgress(props: WidgetTaskHandlerProps) {
             style={{
                 height: 'match_parent',
                 width: 'match_parent',
-                backgroundColor: '#0a0a0a',
+                backgroundColor: '#00000000',
                 borderRadius: 22,
                 padding: 16,
                 flexDirection: 'column',
