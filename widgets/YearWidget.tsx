@@ -24,7 +24,7 @@ function getYearProgress(): YearProgress {
 
     const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     // ensure daysRemaining doesn't go below 0
-    const daysRemaining = Math.max(0, Math.ceil((endOfYear.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    const daysRemaining = totalDays - dayOfYear;
     const percentComplete = Math.min(100, Math.round((dayOfYear / totalDays) * 100));
 
     return { dayOfYear, daysRemaining, percentComplete, totalDays, currentYear };
@@ -130,11 +130,11 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
             >
                 <TextWidget
                     text={`${percentComplete}%`}
-                    style={{ fontSize: 11, color: '#888888', fontWeight: 'bold' }}
+                    style={{ fontSize: 11, color: '#ffffff', fontWeight: 'bold' }}
                 />
                 <TextWidget
                     text={`${daysRemaining} left`}
-                    style={{ fontSize: 11, color: '#4CAF50', fontWeight: 'bold' }}
+                    style={{ fontSize: 11, color: '#ffffff', fontWeight: 'bold' }}
                 />
             </FlexWidget>
         </FlexWidget>
@@ -234,11 +234,11 @@ async function renderPlantGrowth(props: WidgetTaskHandlerProps) {
             <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
                 <TextWidget
                     text={`${percentComplete}%`}
-                    style={{ fontSize: 10, color: '#666666' }}
+                    style={{ fontSize: 10, color: '#ffffff' }}
                 />
                 <TextWidget
                     text={`${daysRemaining}d`}
-                    style={{ fontSize: 10, color: '#888888' }}
+                    style={{ fontSize: 10, color: '#ffffff' }}
                 />
             </FlexWidget>
         </FlexWidget>
@@ -291,7 +291,7 @@ async function renderDaysStrip(props: WidgetTaskHandlerProps) {
                     text={dayLabel}
                     style={{
                         fontSize: 10,
-                        color: isToday ? COLOR_TODAY : COLOR_TEXT_MUTED,
+                        color: isToday ? COLOR_TODAY : '#ffffff',
                         fontWeight: isToday ? 'bold' : 'normal',
                         marginBottom: 4
                     }}
@@ -313,7 +313,7 @@ async function renderDaysStrip(props: WidgetTaskHandlerProps) {
                         text={`${dayNum}`}
                         style={{
                             fontSize: 10,
-                            color: isToday ? '#000000' : COLOR_TEXT_MUTED,
+                            color: isToday ? '#000000' : '#ffffff',
                             fontWeight: 'bold'
                         }}
                     />
@@ -384,7 +384,7 @@ async function renderCircularProgress(props: WidgetTaskHandlerProps) {
         >
             <FlexWidget style={{ flexDirection: 'row', marginBottom: 12 }}>{dots}</FlexWidget>
             <TextWidget text={`${percentComplete}%`} style={{ fontSize: 32, fontWeight: 'bold', color: '#fff' }} />
-            <TextWidget text={`${daysRemaining} days left`} style={{ fontSize: 10, color: '#4CAF50', marginTop: 4 }} />
+            <TextWidget text={`${daysRemaining} days left`} style={{ fontSize: 10, color: '#ffffff', marginTop: 4 }} />
         </FlexWidget>
     );
 }
