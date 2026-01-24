@@ -1,57 +1,65 @@
-# 365: Year Progression & Journaling
+<div align="center">
+  <img src="assets/screenshots/onboarding_splash.jpg" width="120" style="border-radius: 20px; margin-bottom: 20px;" />
 
-**365** is a minimalist React Native application designed to help you visualize your year, build consistent habits, and cultivate memories.
+  # 365
+  ### One Day. One Plant. One Year.
 
-![Banner](assets/screenshots/onboarding_splash.jpg)
+  <p align="center">
+    A minimalist journal to visualize your year, cultivate memories, and watch your garden grow.
+  </p>
 
-## 📌 Features
+  [Download APK](#) • [Features](#features) • [Widgets](#widgets)
+</div>
 
-- **Year Visualization**: See your year as a grid of days. Every dot is a day.
-- **Daily Journaling**: "Every plant is a memory." Select a plant emoji to represent your day.
-- **Garden Growth**: Watch your garden grow as you log entries.
-- **Home Screen Widgets**: Keep track of your progress directly from your home screen with beautiful, transparent widgets.
-- **Local First**: Your data stays on your device.
+---
 
-## 📱 Screenshots
+<br/>
 
-### Onboarding Flow
-| Splash | Streak | Plant Selection |
-|:---:|:---:|:---:|
-| <img src="assets/screenshots/onboarding_splash.jpg" width="200"/> | <img src="assets/screenshots/onboarding_streak.jpg" width="200"/> | <img src="assets/screenshots/onboarding_plant.jpg" width="200"/> |
+### 🌿 Visualize Your Journey
+Every dot is a day. Every plant is a memory. See your year at a glance and fill your grid with life.
 
-### App Experience
-| Main Screen | Widgets |
-|:---:|:---:|
-| <img src="assets/screenshots/screen_main.jpg" width="200"/> | <img src="assets/screenshots/widgets_home.jpg" width="200"/> |
+<div align="center">
+  <img src="assets/screenshots/screen_main.jpg" width="100%" style="border-radius: 10px;" />
+</div>
 
-## 🧩 Widgets
+<br/>
 
-Stay connected to your progress with our custom widgets:
-- **Year Grid**: A compact 2x2 grid showing every day of the year.
-- **Plant Growth**: Visual representation of your current progress (Seed -> Tree).
-- **Quotes & Stats**: Daily motivation.
+### 🌱 Cultivate Memories
+Don't just count the days—make them count. Choose a unique plant emoji to represent your mood, achievement, or memory for the day.
+
+<div align="center">
+  <img src="assets/screenshots/onboarding_plant.jpg" width="280" />
+</div>
+
+<br/>
+
+### 🔥 Build Consistent Habits
+Stay motivated with streak tracking. Small daily actions grow into a lifetime of change.
+
+<div align="center">
+  <img src="assets/screenshots/onboarding_streak.jpg" width="280" />
+</div>
+
+<br/>
+
+### 📱 Always With You
+Track your year directly from your home screen. Beautiful, transparent widgets that blend seamlessly with your wallpaper.
+
+<div align="center">
+  <img src="assets/screenshots/widgets_home.jpg" width="280" />
+</div>
+
+<br/>
+
+---
 
 ## 🛠 Tech Stack
+Built with **React Native (Expo)**, **TypeScript**, and **Native Android Widgets**. Local-first architecture ensures your memories stay yours.
 
-- **React Native** (Expo)
-- **TypeScript**
-- **React Native Android Widget**
-- **AsyncStorage**
-
-## 🚀 Getting Started
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/b-aragu/365.git
-   ```
-
-2. **Install dependencies**
-   ```bash
-   cd 365
-   npm install
-   ```
-
-3. **Run on Android**
-   ```bash
-   npm run android
-   ```
+## 🚀 Get Started
+```bash
+git clone https://github.com/b-aragu/365.git
+cd 365
+npm install
+npm run android
+```
