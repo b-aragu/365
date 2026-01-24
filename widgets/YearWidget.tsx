@@ -124,7 +124,7 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
                 style={{
                     flexDirection: 'row',
                     justifyContent: 'space-between',
-                    width: '100%',
+                    width: 129, // Align exactly with grid (20 * 5 + 19 * 1.5 = 128.5 -> 129 rounded)
                     marginTop: 2 // Tighter spacing
                 }}
             >
