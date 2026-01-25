@@ -75,11 +75,30 @@ export default function JournalPage() {
         setEntry(newEntry);
     };
 
-    // ... handle delete ...
+    const handleDelete = async () => {
+        // Implement delete if needed
+    };
 
-    // ... handle routes ...
+    const handleTabPress = (tab: 'year' | 'journal' | 'settings') => {
+        if (tab === 'year') {
+            router.replace('/');
+        }
+    };
 
-    // ... formattedDate ...
+    const handleGoBack = () => {
+        router.back();
+    };
+
+    // Format date for display
+    const formattedDate = useMemo(() => {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric'
+        });
+    }, [date]);
 
     // Render based on date status
     const renderContent = () => {
