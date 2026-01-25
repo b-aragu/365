@@ -60,23 +60,28 @@ export default function HomeScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'year' | 'journal' | 'settings'>('year');
 
-    // Calculate streak
+    // Calculate streak - Optimized O(N)
     const streak = useMemo(() => {
         if (entries.length === 0) return 0;
 
+        const entryDates = new Set(entries.map(e => e.date));
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         let count = 0;
         let currentDate = new Date(today);
 
-        // Check backwards from today
+        // Check date logic
+        // If today has no entry, check yesterday to start streak?
+        // Current logic checks backwards including today.
+
         while (true) {
             const dateStr = currentDate.toISOString().split('T')[0];
-            const hasEntry = entries.some(e => e.date === dateStr);
-            if (hasEntry) {
+            if (entryDates.has(dateStr)) {
                 count++;
                 currentDate.setDate(currentDate.getDate() - 1);
             } else {
+                // Allow missing today if checked early in morning? 
+                // Matches original logic: if strictly contiguous.
                 break;
             }
         }

@@ -68,26 +68,32 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
 
     const keyExtractor = useCallback((item: any) => item.date, []);
 
+    // OPTIMIZATION: Use ScrollView + FlexWrap instead of FlatList for fixed grid (~365 items)
+    // This removes virtualization overhead for a dataset that fits easily in memory
     return (
         <View style={styles.container}>
-            <FlatList
-                data={days}
-                renderItem={renderItem}
-                keyExtractor={keyExtractor}
-                numColumns={Layout.grid.maxDotsPerRow}
-                contentContainerStyle={styles.gridContent}
-                columnWrapperStyle={styles.row}
-                showsVerticalScrollIndicator={false}
-                removeClippedSubviews={true}
-                initialNumToRender={100}
-                maxToRenderPerBatch={50}
-                windowSize={10}
-                getItemLayout={(data, index) => ({
-                    length: Layout.grid.dotSize + Layout.grid.dotSpacing,
-                    offset: (Layout.grid.dotSize + Layout.grid.dotSpacing) * Math.floor(index / Layout.grid.maxDotsPerRow),
-                    index,
+            <View style={styles.gridContent}>
+                {days.map((item) => {
+                    const entry = entryMap.get(item.date);
+                    const isToday = item.date === today;
+                    const isFuture = item.date > today;
+                    const plantInfo = entry ? getPlantInfo(entry.plantIconId) : null;
+
+                    return (
+                        <MemoizedDayDot
+                            key={item.date}
+                            date={item.date}
+                            isFilled={!!entry}
+                            isToday={isToday}
+                            isFuture={isFuture}
+                            PlantIcon={plantInfo?.component}
+                            plantColor={plantInfo?.color}
+                            onPress={() => handleDayPress(item.date, isFuture)}
+                            disabled={isFuture}
+                        />
+                    );
                 })}
-            />
+            </View>
         </View>
     );
 };
@@ -96,13 +102,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         width: '100%',
-        alignItems: 'center',
     },
     gridContent: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
         padding: Layout.grid.padding,
-        alignItems: 'center',
-    },
-    row: {
-        justifyContent: 'flex-start',
     },
 });

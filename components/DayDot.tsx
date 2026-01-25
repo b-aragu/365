@@ -15,6 +15,43 @@ interface DayDotProps {
     disabled?: boolean;
 }
 
+// 1. Separate Animated Dot for Today (Hook overhead only here)
+const TodayDot: React.FC<{ size: number; color: string }> = ({ size, color }) => {
+    const pulseScale = useSharedValue(1);
+
+    React.useEffect(() => {
+        pulseScale.value = withRepeat(
+            withSequence(
+                withTiming(1.5, { duration: 1000 }),
+                withTiming(1, { duration: 1000 })
+            ),
+            -1,
+            true
+        );
+    }, []);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: pulseScale.value }],
+    }));
+
+    return (
+        <Animated.View
+            style={[
+                styles.dot,
+                animatedStyle,
+                styles.todayDot,
+                {
+                    backgroundColor: color,
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                }
+            ]}
+        />
+    );
+};
+
+// 2. Main Component (Memoized)
 const DayDotComponent: React.FC<DayDotProps> = ({
     isFilled,
     isToday,
@@ -24,25 +61,6 @@ const DayDotComponent: React.FC<DayDotProps> = ({
     plantColor,
     disabled = false
 }) => {
-    const pulseScale = useSharedValue(1);
-
-    React.useEffect(() => {
-        if (isToday) {
-            pulseScale.value = withRepeat(
-                withSequence(
-                    withTiming(1.5, { duration: 1000 }),
-                    withTiming(1, { duration: 1000 })
-                ),
-                -1,
-                true
-            );
-        }
-    }, [isToday]);
-
-    const animatedDotStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: isToday ? pulseScale.value : 1 }],
-    }));
-
     // Render colored SVG plant icon for filled days
     if (isFilled && PlantIcon) {
         const iconSize = Layout.grid.dotSize + 4;
@@ -66,31 +84,20 @@ const DayDotComponent: React.FC<DayDotProps> = ({
         );
     }
 
-    // Dot appearance based on state
-    const getDotStyle = () => {
-        if (isToday) {
-            return {
-                backgroundColor: Colors.dark.dotHighlight,
-                opacity: 1,
-                size: Layout.grid.dotSize + 2,
-            };
-        }
-        if (isFuture) {
-            return {
-                backgroundColor: Colors.dark.dotFuture,
-                opacity: 0.2,
-                size: Layout.grid.dotSize - 2,
-            };
-        }
-        // Past empty
-        return {
-            backgroundColor: Colors.dark.dotPast,
-            opacity: 0.5,
-            size: Layout.grid.dotSize,
-        };
-    };
+    // Determine styles
+    let backgroundColor = Colors.dark.dotPast;
+    let opacity = 0.5;
+    let size = Layout.grid.dotSize;
 
-    const dotStyle = getDotStyle();
+    if (isToday) {
+        backgroundColor = Colors.dark.dotHighlight;
+        opacity = 1;
+        size = Layout.grid.dotSize + 2;
+    } else if (isFuture) {
+        backgroundColor = Colors.dark.dotFuture;
+        opacity = 0.2;
+        size = Layout.grid.dotSize - 2;
+    }
 
     return (
         <TouchableOpacity
@@ -99,20 +106,22 @@ const DayDotComponent: React.FC<DayDotProps> = ({
             disabled={disabled}
             activeOpacity={disabled ? 1 : 0.7}
         >
-            <Animated.View
-                style={[
-                    styles.dot,
-                    animatedDotStyle,
-                    {
-                        backgroundColor: dotStyle.backgroundColor,
-                        opacity: dotStyle.opacity,
-                        width: dotStyle.size,
-                        height: dotStyle.size,
-                        borderRadius: dotStyle.size / 2,
-                    },
-                    isToday && styles.todayDot,
-                ]}
-            />
+            {isToday ? (
+                <TodayDot size={size} color={backgroundColor} />
+            ) : (
+                <View
+                    style={[
+                        styles.dot,
+                        {
+                            backgroundColor,
+                            opacity,
+                            width: size,
+                            height: size,
+                            borderRadius: size / 2,
+                        }
+                    ]}
+                />
+            )}
         </TouchableOpacity>
     );
 };
