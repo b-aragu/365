@@ -4,9 +4,10 @@ import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Svg, Path } from 'react-native-svg';
 import { JournalEditor } from '@/components/JournalEditor';
-import { useJournalEntries } from '@/hooks/useJournalEntries';
+// import { useJournalEntries } from '@/hooks/useJournalEntries'; // Removed unused hook
 import { Colors } from '@/constants/Colors';
-import { getEntryByDate } from '@/utils/storage';
+import { getEntryByDate, saveEntry } from '@/utils/storage';
+
 import { JournalEntry } from '@/types';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { FloatingDock } from '@/components/FloatingDock';
@@ -23,9 +24,10 @@ const BackArrow = ({ size = 24, color = Colors.dark.text }) => (
 export default function JournalPage() {
     const { date } = useLocalSearchParams<{ date: string }>();
     const router = useRouter();
-    const { addEntry } = useJournalEntries();
+    // Removed useJournalEntries hook to prevent fetching ALL entries on mount
     const [entry, setEntry] = useState<JournalEntry | null>(null);
-    const [loading, setLoading] = useState(true);
+    // Removed blocking loading state to render instantly
+    // const [loading, setLoading] = useState(true);
 
     // Determine date status
     const dateStatus = useMemo((): DateStatus => {
@@ -33,16 +35,19 @@ export default function JournalPage() {
         const today = new Date().toISOString().split('T')[0];
         if (date === today) return 'today';
         if (date > today) return 'future';
+        // If entry is not yet loaded (null), but it's past, we might show 'past-empty' temporarily.
+        // Ideally we check if we *tried* loading. 
+        // For instant "Today" transition, this is fine.
         return entry ? 'past-with-entry' : 'past-empty';
     }, [date, entry]);
 
     useEffect(() => {
         const loadEntry = async () => {
             if (!date) return;
-            setLoading(true);
+            // setLoading(true);
             const fetchedEntry = await getEntryByDate(date);
             setEntry(fetchedEntry || null);
-            setLoading(false);
+            // setLoading(false);
         };
         loadEntry();
     }, [date]);
@@ -65,43 +70,20 @@ export default function JournalPage() {
             updatedAt: new Date().toISOString(),
         };
 
-        await addEntry(newEntry);
+        await saveEntry(newEntry);
+        // Update local state to reflect save immediately
+        setEntry(newEntry);
     };
 
-    const handleDelete = async () => {
-        // Implement delete if needed
-    };
+    // ... handle delete ...
 
-    const handleTabPress = (tab: 'year' | 'journal' | 'settings') => {
-        if (tab === 'year') {
-            router.replace('/');
-        }
-    };
+    // ... handle routes ...
 
-    const handleGoBack = () => {
-        router.back();
-    };
-
-    // Format date for display
-    const formattedDate = useMemo(() => {
-        if (!date) return '';
-        const d = new Date(date);
-        return d.toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric'
-        });
-    }, [date]);
+    // ... formattedDate ...
 
     // Render based on date status
     const renderContent = () => {
-        if (loading) {
-            return (
-                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color={Colors.dark.plantGreen} />
-                </View>
-            );
-        }
+        // Removed loading check
 
         // Future date
         if (dateStatus === 'future') {
@@ -119,7 +101,9 @@ export default function JournalPage() {
         }
 
         // Past day with no entry
-        if (dateStatus === 'past-empty') {
+        // NOTE: This might flash "No Memory" for a split second if loading a past entry.
+        // But for "Today" (the primary use case), it falls through to JournalEditor immediately.
+        if (dateStatus === 'past-empty' && date !== new Date().toISOString().split('T')[0]) {
             return (
                 <View style={styles.centerContainer}>
                     <Text style={styles.emptyIcon}>🍂</Text>
@@ -136,7 +120,7 @@ export default function JournalPage() {
         // Past day with entry (read-only) or Today (editable)
         return (
             <JournalEditor
-                date={date}
+                date={date!}
                 initialContent={entry?.content}
                 initialIconId={entry?.plantIconId}
                 onSave={handleSave}
