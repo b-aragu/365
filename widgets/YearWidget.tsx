@@ -19,41 +19,33 @@ function getYearProgress(): YearProgress {
     const isLeapYear = (currentYear % 4 === 0 && currentYear % 100 !== 0) || (currentYear % 400 === 0);
     const totalDays = isLeapYear ? 366 : 365;
 
-    const startOfYear = new Date(currentYear, 0, 1);
-    const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
+    // Use UTC to avoid DST issues when calculating difference in days
+    const utc1 = Date.UTC(currentYear, 0, 1);
+    const utc2 = Date.UTC(currentYear, now.getMonth(), now.getDate());
 
-    const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const dayOfYear = Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24)) + 1;
+
     // ensure daysRemaining doesn't go below 0
-    const daysRemaining = totalDays - dayOfYear;
+    const daysRemaining = Math.max(0, totalDays - dayOfYear);
     const percentComplete = Math.min(100, Math.round((dayOfYear / totalDays) * 100));
 
     return { dayOfYear, daysRemaining, percentComplete, totalDays, currentYear };
 }
 
 // ============================================
-// WIDGET 1: MINIMAL GRID (COMPACT 2x2)
-// Fits 365 days into a small 2x2 space
+// WIDGET BUILDERS (Return JSX)
 // ============================================
-async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
+
+async function getMinimalGridWidget() {
     const Widget = await import('react-native-android-widget');
     const { FlexWidget, TextWidget } = Widget;
     const { dayOfYear, daysRemaining, percentComplete } = getYearProgress();
-
-    // Compact calculation
-    // To fit ~366 dots in a square-ish 2x2 area (~150dp x 150dp available)
-    // 19 x 19 = 361 (close)
-    // 18 x 21 = 378
-    // Let's use 19 rows x 20 cols = 380 dots
-    // Dot size: 5dp + 1.5dp gap = 6.5dp
-    // 20 * 6.5 = 130dp width (fits)
-    // 19 * 6.5 = 123.5dp height (fits)
 
     const COLS = 20;
     const ROWS = 19;
     const DOT_SIZE = 5;
     const DOT_GAP = 1.5;
 
-    // Colors
     const COLOR_BG = '#00000000'; // TRANSPARENT
     const COLOR_PAST = '#333333';
     const COLOR_TODAY = '#4CAF50';
@@ -64,7 +56,6 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
         const dots = [];
         for (let c = 0; c < COLS; c++) {
             const index = r * COLS + c + 1;
-            // Stop generating dots after 366
             if (index > 366) break;
 
             const isPast = index < dayOfYear;
@@ -100,7 +91,7 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
         );
     }
 
-    props.renderWidget(
+    return (
         <FlexWidget
             style={{
                 height: 'match_parent',
@@ -109,23 +100,21 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
                 borderRadius: 22,
                 padding: 12,
                 flexDirection: 'column',
-                justifyContent: 'center', // Changed from space-between to center
+                justifyContent: 'center',
                 alignItems: 'center',
             }}
             clickAction="OPEN_APP"
         >
-            {/* The Grid */}
             <FlexWidget style={{ flexDirection: 'column', alignItems: 'center' }}>
                 {rows}
             </FlexWidget>
 
-            {/* Footer Stats - Closer to dots */}
             <FlexWidget
                 style={{
                     flexDirection: 'row',
                     justifyContent: 'space-between',
-                    width: 129, // Align exactly with grid (20 * 5 + 19 * 1.5 = 128.5 -> 129 rounded)
-                    marginTop: 2 // Tighter spacing
+                    width: 129,
+                    marginTop: 2
                 }}
             >
                 <TextWidget
@@ -141,16 +130,11 @@ async function renderMinimalGrid(props: WidgetTaskHandlerProps) {
     );
 }
 
-// ============================================
-// WIDGET 2: PLANT GROWTH (FIXED VISIBILITY)
-// Simplified layout to ensure rendering
-// ============================================
-async function renderPlantGrowth(props: WidgetTaskHandlerProps) {
+async function getPlantGrowthWidget() {
     const Widget = await import('react-native-android-widget');
     const { FlexWidget, TextWidget } = Widget;
     const { daysRemaining, percentComplete } = getYearProgress();
 
-    // Stages
     const stages = [
         { min: 0, emoji: '🌰', label: 'Seed', color: '#BCAAA4' },
         { min: 10, emoji: '🌱', label: 'Sprouts', color: '#A5D6A7' },
@@ -165,8 +149,7 @@ async function renderPlantGrowth(props: WidgetTaskHandlerProps) {
         if (percentComplete >= stage.min) currentStage = stage;
     }
 
-    // Force solid background color and standard flex props
-    props.renderWidget(
+    return (
         <FlexWidget
             style={{
                 height: 'match_parent',
@@ -180,58 +163,65 @@ async function renderPlantGrowth(props: WidgetTaskHandlerProps) {
             }}
             clickAction="OPEN_APP"
         >
-            {/* Circle container for emoji - VERY SMALL */}
             <FlexWidget
                 style={{
-                    width: 32, // Further reduced from 48
-                    height: 32, // Further reduced from 48
-                    borderRadius: 16, // Further reduced from 24
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
                     backgroundColor: '#151515',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginBottom: 4 // Reduced margin
+                    marginBottom: 4
                 }}
             >
                 <TextWidget
                     text={currentStage.emoji}
-                    style={{ fontSize: 16 }} // Reduced from 24
+                    style={{ fontSize: 16 }}
                 />
             </FlexWidget>
 
-            {/* Text details */}
             <TextWidget
                 text={currentStage.label}
                 style={{
-                    fontSize: 14, // Slightly smaller text
+                    fontSize: 14,
                     fontWeight: 'bold',
                     color: '#ffffff',
                     marginBottom: 6
                 }}
             />
 
-            {/* Progress Bar Track */}
+            {/* Progress Bar with Correct Flex Weights */}
             <FlexWidget
                 style={{
-                    width: '100%',
-                    height: 4, // Thinner bar
+                    width: 'match_parent',
+                    height: 4,
                     backgroundColor: '#222222',
                     borderRadius: 2,
                     marginBottom: 4,
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    flexDirection: 'row'
                 }}
             >
-                {/* Progress Bar Fill */}
                 <FlexWidget
                     style={{
-                        width: `${Math.max(5, percentComplete)}%`,
+                        width: 0,
+                        flex: Math.max(1, percentComplete),
                         height: 4,
                         backgroundColor: currentStage.color,
                         borderRadius: 2,
                     }}
                 />
+                <FlexWidget
+                    style={{
+                        width: 0,
+                        flex: Math.max(1, 100 - percentComplete),
+                        height: 4,
+                        backgroundColor: '#00000000',
+                    }}
+                />
             </FlexWidget>
 
-            <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+            <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', width: 'match_parent' }}>
                 <TextWidget
                     text={`${percentComplete}%`}
                     style={{ fontSize: 10, color: '#ffffff' }}
@@ -245,16 +235,12 @@ async function renderPlantGrowth(props: WidgetTaskHandlerProps) {
     );
 }
 
-// ============================================
-// WIDGET 3: WEEK STRIP (NO FAKE DATA)
-// Clean version with correct dates and no confusing highlights
-// ============================================
-async function renderDaysStrip(props: WidgetTaskHandlerProps) {
+async function getDaysStripWidget() {
     const Widget = await import('react-native-android-widget');
     const { FlexWidget, TextWidget } = Widget;
 
     const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    const today = new Date();
+    const today = new Date(); // Widget runs in background, new Date() is correct
 
     const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -268,15 +254,9 @@ async function renderDaysStrip(props: WidgetTaskHandlerProps) {
         const dayNum = date.getDate();
         const isToday = index === 6;
 
-        // CLEANUP: Removed pseudoRandom entries to avoid user confusion ("idk why highlighted")
-        // Now it just shows the days. Entries will be blank/gray until we implement real sync.
-        // Today is highlighted to anchor the user.
-        const hasEntry = false;
-
         const COLOR_TODAY = '#4CAF50';
         const COLOR_BG_EMPTY = '#151515';
         const COLOR_BORDER = '#222222';
-        const COLOR_TEXT_MUTED = '#666666';
 
         return (
             <FlexWidget
@@ -322,7 +302,7 @@ async function renderDaysStrip(props: WidgetTaskHandlerProps) {
         );
     });
 
-    props.renderWidget(
+    return (
         <FlexWidget
             style={{
                 height: 'match_parent',
@@ -341,15 +321,11 @@ async function renderDaysStrip(props: WidgetTaskHandlerProps) {
     );
 }
 
-// ============================================
-// WIDGET 4: CIRCULAR (Clean Update)
-// ============================================
-async function renderCircularProgress(props: WidgetTaskHandlerProps) {
+async function getCircularProgressWidget() {
     const Widget = await import('react-native-android-widget');
     const { FlexWidget, TextWidget } = Widget;
     const { daysRemaining, percentComplete } = getYearProgress();
 
-    // 12 dots is cleaner for small sizes than 16
     const TOTAL_DOTS = 12;
     const FILLED_DOTS = Math.round((percentComplete / 100) * TOTAL_DOTS);
 
@@ -368,7 +344,7 @@ async function renderCircularProgress(props: WidgetTaskHandlerProps) {
         )
     }
 
-    props.renderWidget(
+    return (
         <FlexWidget
             style={{
                 height: 'match_parent',
@@ -390,19 +366,25 @@ async function renderCircularProgress(props: WidgetTaskHandlerProps) {
 }
 
 // ============================================
-// MAIN TASK HANDLER
+// MAIN HANDLER & EXPORTS
 // ============================================
+
+export async function getWidget(widgetName: string) {
+    switch (widgetName) {
+        case 'YearWidget':
+        case 'MinimalGridWidget': return await getMinimalGridWidget();
+        case 'PlantGrowthWidget': return await getPlantGrowthWidget();
+        case 'CircularProgressWidget': return await getCircularProgressWidget();
+        case 'DaysStripWidget': return await getDaysStripWidget();
+        default: return await getMinimalGridWidget();
+    }
+}
+
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {
     const widgetName = props.widgetInfo.widgetName;
     try {
-        switch (widgetName) {
-            case 'YearWidget':
-            case 'MinimalGridWidget': await renderMinimalGrid(props); break;
-            case 'PlantGrowthWidget': await renderPlantGrowth(props); break;
-            case 'CircularProgressWidget': await renderCircularProgress(props); break;
-            case 'DaysStripWidget': await renderDaysStrip(props); break;
-            default: await renderMinimalGrid(props);
-        }
+        const widget = await getWidget(widgetName);
+        props.renderWidget(widget);
     } catch (e) {
         console.error('Widget Error:', e);
     }

@@ -39,3 +39,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Marketing & Internal Specs
+marketing-video/
+HIGGSFIELD_PROMPT.md
+SORA_PROMPT.md
+LINKEDIN_POSTS.md
+TIKTOK_DUMP_GUIDE.md
