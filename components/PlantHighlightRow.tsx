@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle, withTiming, useSharedValue, withDelay } from 'react-native-reanimated';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
 import { Colors } from '@/constants/Colors';
 
@@ -20,12 +21,24 @@ export const PlantHighlightRow = () => {
         return "🌱 Every memory counts";
     };
 
+    const width = useSharedValue(0);
+
+    React.useEffect(() => {
+        width.value = withDelay(300, withTiming(progressPercent, { duration: 1000 }));
+    }, [progressPercent]);
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            width: `${Math.min(width.value, 100)}%`,
+        };
+    });
+
     return (
         <View style={styles.container}>
             {/* Progress bar */}
             <View style={styles.progressContainer}>
                 <View style={styles.progressBar}>
-                    <View style={[styles.progressFill, { width: `${Math.min(progressPercent, 100)}%` }]} />
+                    <Animated.View style={[styles.progressFill, animatedStyle]} />
                 </View>
             </View>
 

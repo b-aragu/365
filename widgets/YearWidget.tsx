@@ -72,7 +72,7 @@ async function getMinimalGridWidget() {
                         width: DOT_SIZE,
                         height: DOT_SIZE,
                         borderRadius: DOT_SIZE / 2,
-                        backgroundColor: bgColor,
+                        backgroundColor: bgColor as any,
                         marginRight: c < COLS - 1 ? DOT_GAP : 0,
                     }}
                 />
@@ -207,7 +207,7 @@ async function getPlantGrowthWidget() {
                         width: 0,
                         flex: Math.max(1, percentComplete),
                         height: 4,
-                        backgroundColor: currentStage.color,
+                        backgroundColor: currentStage.color as any,
                         borderRadius: 2,
                     }}
                 />

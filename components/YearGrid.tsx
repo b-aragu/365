@@ -62,6 +62,7 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
                 plantColor={plantInfo?.color}
                 onPress={() => handleDayPress(item.date, isFuture)}
                 disabled={isFuture}
+                index={0} // Default for single item render (not used in map much)
             />
         );
     }, [entryMap, today, handleDayPress]);
@@ -73,7 +74,7 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
     return (
         <View style={styles.container}>
             <View style={styles.gridContent}>
-                {days.map((item) => {
+                {days.map((item, index) => {
                     const entry = entryMap.get(item.date);
                     const isToday = item.date === today;
                     const isFuture = item.date > today;
@@ -90,6 +91,7 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
                             plantColor={plantInfo?.color}
                             onPress={() => handleDayPress(item.date, isFuture)}
                             disabled={isFuture}
+                            index={index}
                         />
                     );
                 })}

@@ -48,5 +48,12 @@ Your memories belong to you. **365** is built with a local-first architecture, e
 - **Dark Mode**: Sleek, battery-saving dark interface.
 - **Journaling**: Simple, distraction-free entry editor.
 
+
+## ✨ What's New in 1.0.1
+- **Widget Polish**: Fixed layout issues on Android; widgets now look perfect on all screen sizes.
+- **Smart Updates**: Widgets now refresh immediately when you open the app, ensuring your days/seeds are always in sync.
+- **Precision Time**: Improved date calculations to handle timezones and Daylight Saving Time flawlessly.
+- **Faster Journal**: Instant entry loading—no more waiting to write.
+
 ## 🔑 Keywords
 journal, diary, year pixel, habit tracker, daily motivation, widget, calendar, minimalism, mental health, mood tracker, 365 days

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, FlatList } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
@@ -12,19 +13,24 @@ interface IconSelectorProps {
 }
 
 export const IconSelector: React.FC<IconSelectorProps> = ({ visible, onSelect, onClose, selectedIconId }) => {
-    const renderItem = ({ item }: { item: typeof PLANT_ICONS_LIST[0] }) => {
+    const handleSelect = (id: string) => {
+        Haptics.selectionAsync();
+        onSelect(id);
+    };
+
+    const renderItem = useCallback(({ item }: { item: typeof PLANT_ICONS_LIST[0] }) => {
         const IconComponent = item.component;
         const isSelected = selectedIconId === item.id;
         return (
             <TouchableOpacity
                 style={[styles.iconItem, isSelected && styles.selectedIconItem]}
-                onPress={() => onSelect(item.id)}
+                onPress={() => handleSelect(item.id)}
             >
                 <IconComponent width={32} height={32} />
                 <Text style={styles.iconName}>{item.name}</Text>
             </TouchableOpacity>
         );
-    };
+    }, [selectedIconId, onSelect]);
 
     return (
         <Modal visible={visible} transparent animationType="slide">

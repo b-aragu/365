@@ -1,8 +1,10 @@
 import React, { memo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Animated, { useAnimatedStyle, withTiming, withRepeat, withSequence, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withTiming, withRepeat, withSequence, useSharedValue, FadeIn, ZoomIn } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface DayDotProps {
     date: string;
@@ -13,6 +15,7 @@ interface DayDotProps {
     PlantIcon?: React.ComponentType<any>;
     plantColor?: string;
     disabled?: boolean;
+    index?: number;
 }
 
 // 1. Separate Animated Dot for Today (Hook overhead only here)
@@ -59,14 +62,23 @@ const DayDotComponent: React.FC<DayDotProps> = ({
     onPress,
     PlantIcon,
     plantColor,
-    disabled = false
+    disabled = false,
+    index = 0
 }) => {
+    // Subtle staggered entry
+    // Cap delay to avoid waiting too long for end of year items
+    const maxDelay = 800;
+    // Use a non-linear delay or batching effectively by clamping, or just a small multiplier
+    // 365 * 2ms = 730ms total time for last dot to start. Acceptable.
+    const delay = Math.min(index * 2, maxDelay);
+
     // Render colored SVG plant icon for filled days
     if (isFilled && PlantIcon) {
         const iconSize = Layout.grid.dotSize + 4;
         const color = plantColor || Colors.dark.plantGreen;
         return (
-            <TouchableOpacity
+            <AnimatedTouchableOpacity
+                entering={ZoomIn.delay(delay).springify().damping(12)}
                 onPress={onPress}
                 style={styles.container}
                 disabled={disabled}
@@ -80,7 +92,7 @@ const DayDotComponent: React.FC<DayDotProps> = ({
                         strokeWidth={1.5}
                     />
                 </View>
-            </TouchableOpacity>
+            </AnimatedTouchableOpacity>
         );
     }
 
@@ -100,7 +112,8 @@ const DayDotComponent: React.FC<DayDotProps> = ({
     }
 
     return (
-        <TouchableOpacity
+        <AnimatedTouchableOpacity
+            entering={ZoomIn.delay(delay).springify().damping(12)}
             onPress={onPress}
             style={styles.container}
             disabled={disabled}
@@ -122,7 +135,7 @@ const DayDotComponent: React.FC<DayDotProps> = ({
                     ]}
                 />
             )}
-        </TouchableOpacity>
+        </AnimatedTouchableOpacity>
     );
 };
 
