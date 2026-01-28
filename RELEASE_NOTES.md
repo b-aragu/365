@@ -55,5 +55,12 @@ Your memories belong to you. **365** is built with a local-first architecture, e
 - **Precision Time**: Improved date calculations to handle timezones and Daylight Saving Time flawlessly.
 - **Faster Journal**: Instant entry loading—no more waiting to write.
 
+## ✨ What's New in 1.0.2
+- **Reliable Memories**: Fixed critical time zone issues where memories could be saved to the wrong date or disappear. "Today" is now always "Today".
+- **Silent Saving**: Improved the auto-save experience—no more annoying "Planted!" popups interrupting your flow.
+- **Beautiful Animations**: Added staggered animations to the daily grid and a smooth progress bar for your yearly goals.
+- **Touch Feedback**: Added subtle haptic feedback when planting memories for a more tactile feel.
+- **Cleanliness**: Various code optimizations and cleanup for better performance.
+
 ## 🔑 Keywords
 journal, diary, year pixel, habit tracker, daily motivation, widget, calendar, minimalism, mental health, mood tracker, 365 days
