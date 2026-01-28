@@ -66,7 +66,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
     }, [content]);
 
     // Plant the memory
-    const plantMemory = useCallback(async () => {
+    const plantMemory = useCallback(async (isManual: boolean = true) => {
         if (readOnly || !content.trim()) return;
 
         await onSave(content, iconId);
@@ -74,11 +74,13 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         initialIconRef.current = iconId;
         setHasUnsavedChanges(false);
 
-        setShowSaveConfirm(true);
-        if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
-        confirmTimeoutRef.current = setTimeout(() => {
-            setShowSaveConfirm(false);
-        }, 2000);
+        if (isManual) {
+            setShowSaveConfirm(true);
+            if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+            confirmTimeoutRef.current = setTimeout(() => {
+                setShowSaveConfirm(false);
+            }, 2000);
+        }
     }, [content, iconId, onSave, readOnly]);
 
     // Auto-save after inactivity
@@ -87,7 +89,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
         saveTimeoutRef.current = setTimeout(() => {
-            plantMemory();
+            plantMemory(false);
         }, 3000);
 
         return () => {
@@ -236,7 +238,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
                     <View style={styles.buttonContainer}>
                         <TouchableOpacity
                             style={[styles.plantButton, { backgroundColor: selectedColor }]}
-                            onPress={plantMemory}
+                            onPress={() => plantMemory(true)}
                             activeOpacity={0.8}
                         >
                             <SelectedIcon width={18} height={18} color="#fff" strokeWidth={2} />

@@ -9,7 +9,7 @@ import { Colors } from '@/constants/Colors';
 import { getEntryByDate, saveEntry } from '@/utils/storage';
 
 import { JournalEntry } from '@/types';
-import { getDayOfYear } from '@/utils/dateUtils';
+import { getDayOfYear, getTodayDateString } from '@/utils/dateUtils';
 import { FloatingDock } from '@/components/FloatingDock';
 
 type DateStatus = 'today' | 'past-with-entry' | 'past-empty' | 'future';
@@ -32,7 +32,7 @@ export default function JournalPage() {
     // Determine date status
     const dateStatus = useMemo((): DateStatus => {
         if (!date) return 'future';
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDateString();
         if (date === today) return 'today';
         if (date > today) return 'future';
         // If entry is not yet loaded (null), but it's past, we might show 'past-empty' temporarily.
@@ -122,7 +122,7 @@ export default function JournalPage() {
         // Past day with no entry
         // NOTE: This might flash "No Memory" for a split second if loading a past entry.
         // But for "Today" (the primary use case), it falls through to JournalEditor immediately.
-        if (dateStatus === 'past-empty' && date !== new Date().toISOString().split('T')[0]) {
+        if (dateStatus === 'past-empty' && date !== getTodayDateString()) {
             return (
                 <View style={styles.centerContainer}>
                     <Text style={styles.emptyIcon}>🍂</Text>

@@ -6,7 +6,7 @@ import { Svg, Path, Circle } from 'react-native-svg';
 import { YearGrid } from '@/components/YearGrid';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
 import { Colors } from '@/constants/Colors';
-import { getDaysRemaining } from '@/utils/dateUtils';
+import { getDaysRemaining, getTodayDateString } from '@/utils/dateUtils';
 import { PlantHighlightRow } from '@/components/PlantHighlightRow';
 import { FloatingDock } from '@/components/FloatingDock';
 
@@ -65,23 +65,24 @@ export default function HomeScreen() {
         if (entries.length === 0) return 0;
 
         const entryDates = new Set(entries.map(e => e.date));
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        let count = 0;
-        let currentDate = new Date(today);
 
-        // Check date logic
-        // If today has no entry, check yesterday to start streak?
-        // Current logic checks backwards including today.
+        // Start from Today (Local Time)
+        const today = new Date();
+        let currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        let count = 0;
 
         while (true) {
-            const dateStr = currentDate.toISOString().split('T')[0];
+            // Construct local YYYY-MM-DD
+            const y = currentDate.getFullYear();
+            const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const d = String(currentDate.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+
             if (entryDates.has(dateStr)) {
                 count++;
                 currentDate.setDate(currentDate.getDate() - 1);
             } else {
-                // Allow missing today if checked early in morning? 
-                // Matches original logic: if strictly contiguous.
                 break;
             }
         }
@@ -97,7 +98,7 @@ export default function HomeScreen() {
     const handleTabPress = (tab: 'year' | 'journal' | 'settings') => {
         setActiveTab(tab);
         if (tab === 'journal') {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getTodayDateString();
             router.push(`/journal/${today}`);
             setTimeout(() => setActiveTab('year'), 500);
         }

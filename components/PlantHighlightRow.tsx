@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming, useSharedValue, withDelay } from 'react-native-reanimated';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
+import { getDayOfYear } from '@/utils/dateUtils';
 import { Colors } from '@/constants/Colors';
 
 export const PlantHighlightRow = () => {
     const { entries } = useJournalEntries();
 
     // Calculate progress for the year
-    const currentDayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const currentDayOfYear = getDayOfYear(new Date());
     const entriesThisYear = entries.filter(e => e.year === new Date().getFullYear()).length;
     const progressPercent = currentDayOfYear > 0 ? Math.round((entriesThisYear / currentDayOfYear) * 100) : 0;
 
