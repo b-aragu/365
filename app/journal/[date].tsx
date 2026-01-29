@@ -68,6 +68,7 @@ export default function JournalPage() {
             plantIconId: iconId,
             createdAt: entry?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            timezoneOffset: new Date().getTimezoneOffset(),
         };
 
         await saveEntry(newEntry);

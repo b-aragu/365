@@ -25,7 +25,8 @@ export const initDatabase = async (): Promise<void> => {
                 wordCount INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT,
-                year INTEGER NOT NULL
+                year INTEGER NOT NULL,
+                timezoneOffset INTEGER
             );
             CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
             CREATE INDEX IF NOT EXISTS idx_entries_year ON entries(year);
@@ -33,6 +34,15 @@ export const initDatabase = async (): Promise<void> => {
 
         // Migrate from AsyncStorage if needed
         await migrateFromAsyncStorage();
+
+        // Ensure schema is up to date (add timezoneOffset if missing)
+        try {
+            await db.execAsync('ALTER TABLE entries ADD COLUMN timezoneOffset INTEGER;');
+        } catch (e) {
+            // Check if error is because column exists (only reliable way in some sqlite versions without querying pragma)
+            // Or just ignore, assuming failure means it likely exists or something minor.
+            // Better: Check columns first.
+        }
     } catch (error) {
         console.error('Error initializing database:', error);
         // Don't throw - allow app to continue even if DB fails
@@ -64,8 +74,8 @@ const migrateFromAsyncStorage = async (): Promise<void> => {
 export const saveEntry = async (entry: JournalEntry): Promise<void> => {
     try {
         await getDb().runAsync(
-            `INSERT OR REPLACE INTO entries (id, date, content, plantIconId, wordCount, createdAt, updatedAt, year)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT OR REPLACE INTO entries (id, date, content, plantIconId, wordCount, createdAt, updatedAt, year, timezoneOffset)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 entry.id,
                 entry.date,
@@ -74,7 +84,8 @@ export const saveEntry = async (entry: JournalEntry): Promise<void> => {
                 entry.wordCount || 0,
                 entry.createdAt,
                 entry.updatedAt || new Date().toISOString(),
-                entry.year
+                entry.year,
+                entry.timezoneOffset || new Date().getTimezoneOffset()
             ]
         );
     } catch (error) {

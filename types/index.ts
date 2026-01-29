@@ -8,6 +8,7 @@ export interface JournalEntry {
     plantIconId: string;
     createdAt: string; // ISO timestamp
     updatedAt?: string; // ISO timestamp
+    timezoneOffset?: number; // Offset in minutes from UTC
 }
 
 export interface PlantIcon {

@@ -122,7 +122,7 @@ async function getMinimalGridWidget() {
                     style={{ fontSize: 11, color: '#ffffff', fontWeight: 'bold' }}
                 />
                 <TextWidget
-                    text={`${daysRemaining} left`}
+                    text={`${daysRemaining} days left`}
                     style={{ fontSize: 11, color: '#ffffff', fontWeight: 'bold' }}
                 />
             </FlexWidget>
