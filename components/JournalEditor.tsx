@@ -44,6 +44,18 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         });
     }, [date]);
 
+    // Sync state with props when data loads
+    useEffect(() => {
+        if (initialContent !== undefined && initialContent !== content) {
+            setContent(initialContent);
+            initialContentRef.current = initialContent;
+        }
+        if (initialIconId && initialIconId !== iconId) {
+            setIconId(initialIconId);
+            initialIconRef.current = initialIconId;
+        }
+    }, [initialContent, initialIconId]);
+
     // Get selected plant
     const selectedPlant = DETAILED_PLANT_ICONS.find(p => p.id === iconId) || DETAILED_PLANT_ICONS[0];
     const SelectedIcon = selectedPlant.component;

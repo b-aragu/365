@@ -55,6 +55,10 @@ Your memories belong to you. **365** is built with a local-first architecture, e
 - **Precision Time**: Improved date calculations to handle timezones and Daylight Saving Time flawlessly.
 - **Faster Journal**: Instant entry loading—no more waiting to write.
 
+## ✨ What's New in 1.0.3
+- **Bug Fix**: Resolved an issue where memories planted "today" would sometimes disappear from the editor view. Your memories are now safe and visible immediately.
+- **Stability**: Improved state synchronization for the journal editor.
+
 ## ✨ What's New in 1.0.2
 - **Reliable Memories**: Fixed critical time zone issues where memories could be saved to the wrong date or disappear. "Today" is now always "Today".
 - **Silent Saving**: Improved the auto-save experience—no more annoying "Planted!" popups interrupting your flow.
