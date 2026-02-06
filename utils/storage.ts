@@ -12,6 +12,24 @@ const getDb = (): SQLite.SQLiteDatabase => {
     return _db;
 };
 
+type EntryChangeListener = () => void;
+const entryChangeListeners = new Set<EntryChangeListener>();
+
+const notifyEntriesChanged = () => {
+    entryChangeListeners.forEach((listener) => {
+        try {
+            listener();
+        } catch (error) {
+            console.error('Entry listener error:', error);
+        }
+    });
+};
+
+export const subscribeToEntryChanges = (listener: EntryChangeListener): (() => void) => {
+    entryChangeListeners.add(listener);
+    return () => entryChangeListeners.delete(listener);
+};
+
 // Initialize database tables
 export const initDatabase = async (): Promise<void> => {
     try {
@@ -88,6 +106,7 @@ export const saveEntry = async (entry: JournalEntry): Promise<void> => {
                 entry.timezoneOffset || new Date().getTimezoneOffset()
             ]
         );
+        notifyEntriesChanged();
     } catch (error) {
         console.error('Error saving entry:', error);
         throw error;
@@ -131,6 +150,7 @@ export const getEntriesByYear = async (year: number): Promise<JournalEntry[]> =>
 export const deleteEntry = async (id: string): Promise<void> => {
     try {
         await getDb().runAsync('DELETE FROM entries WHERE id = ?', [id]);
+        notifyEntriesChanged();
     } catch (error) {
         console.error('Error deleting entry:', error);
         throw error;
@@ -142,6 +162,7 @@ export const clearAllData = async (): Promise<void> => {
     try {
         await getDb().runAsync('DELETE FROM entries');
         await AsyncStorage.removeItem('@365_migrated_to_sqlite');
+        notifyEntriesChanged();
     } catch (error) {
         console.error('Error clearing data:', error);
     }

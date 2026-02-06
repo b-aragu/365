@@ -5,6 +5,7 @@ import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 import { DETAILED_PLANT_ICONS } from '@/assets/icons/plants';
 import { getPlantColor } from '@/constants/PlantColors';
+import { triggerSelectionHaptic, triggerSuccessHaptic } from '@/utils/haptics';
 
 interface JournalEditorProps {
     date: string;
@@ -71,6 +72,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
 
     // Handle plant selection
     const handlePlantSelect = useCallback((newIconId: string) => {
+        triggerSelectionHaptic().catch(() => { });
         setIconId(newIconId);
         if (newIconId !== initialIconRef.current || content !== initialContentRef.current) {
             setHasUnsavedChanges(true);
@@ -87,6 +89,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         setHasUnsavedChanges(false);
 
         if (isManual) {
+            triggerSuccessHaptic().catch(() => { });
             setShowSaveConfirm(true);
             if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
             confirmTimeoutRef.current = setTimeout(() => {

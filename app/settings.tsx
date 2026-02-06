@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, TextInput, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
@@ -6,6 +6,8 @@ import { Svg, Path, Circle } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/Colors';
 import { useJournalEntries } from '@/hooks/useJournalEntries';
+import { getHapticsEnabled, setHapticsEnabled } from '@/utils/preferences';
+import Constants from 'expo-constants';
 
 // Icons
 const BackIcon = ({ size = 24, color = Colors.dark.text }) => (
@@ -42,6 +44,16 @@ export default function SettingsScreen() {
     const [hapticEnabled, setHapticEnabled] = useState(true);
     const [showFeedback, setShowFeedback] = useState(false);
     const [feedbackText, setFeedbackText] = useState('');
+
+
+    useEffect(() => {
+        getHapticsEnabled().then(setHapticEnabled).catch(() => setHapticEnabled(true));
+    }, []);
+
+    const handleHapticToggle = async (enabled: boolean) => {
+        setHapticEnabled(enabled);
+        await setHapticsEnabled(enabled);
+    };
 
     const handleBack = () => router.back();
     const totalWords = entries.reduce((acc, e) => acc + (e.wordCount || 0), 0);
@@ -108,7 +120,7 @@ export default function SettingsScreen() {
                             </View>
                             <Switch
                                 value={hapticEnabled}
-                                onValueChange={setHapticEnabled}
+                                onValueChange={handleHapticToggle}
                                 trackColor={{ false: Colors.dark.border, true: Colors.dark.plantGreen }}
                                 thumbColor={Colors.dark.text}
                             />
@@ -176,7 +188,7 @@ export default function SettingsScreen() {
 
                         <View style={styles.aboutRow}>
                             <Text style={styles.aboutLabel}>Version</Text>
-                            <Text style={styles.aboutValue}>1.0.0</Text>
+                            <Text style={styles.aboutValue}>{Constants.expoConfig?.version || '1.0.3'}</Text>
                         </View>
                         <View style={styles.aboutRow}>
                             <Text style={styles.aboutLabel}>Made by</Text>

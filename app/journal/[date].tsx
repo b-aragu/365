@@ -11,6 +11,7 @@ import { getEntryByDate, saveEntry } from '@/utils/storage';
 import { JournalEntry } from '@/types';
 import { getDayOfYear, getTodayDateString } from '@/utils/dateUtils';
 import { FloatingDock } from '@/components/FloatingDock';
+import { updateAllWidgets } from '@/utils/widgets';
 
 type DateStatus = 'today' | 'past-with-entry' | 'past-empty' | 'future';
 
@@ -74,6 +75,7 @@ export default function JournalPage() {
         await saveEntry(newEntry);
         // Update local state to reflect save immediately
         setEntry(newEntry);
+        updateAllWidgets().catch(() => { });
     };
 
     const handleDelete = async () => {

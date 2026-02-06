@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
 import { Svg, Path, Circle, Rect } from 'react-native-svg';
+import { triggerSelectionHaptic } from '@/utils/haptics';
 
 // Grid Icon (4 dots in 2x2 pattern - matching target design)
 const GridIcon = ({ color }: { color: string }) => (
@@ -44,6 +45,11 @@ interface FloatingDockProps {
 }
 
 export const FloatingDock = ({ activeTab, onTabPress }: FloatingDockProps) => {
+    const handlePress = (tab: 'year' | 'journal' | 'settings') => {
+        triggerSelectionHaptic().catch(() => { });
+        onTabPress(tab);
+    };
+
     return (
         <View style={styles.wrapper}>
             {/* The Dock (Centered) */}
@@ -51,14 +57,14 @@ export const FloatingDock = ({ activeTab, onTabPress }: FloatingDockProps) => {
                 <BlurView intensity={20} tint="dark" style={styles.blurContainer}>
                     <TouchableOpacity
                         style={[styles.tab, activeTab === 'year' && styles.activeTab]}
-                        onPress={() => onTabPress('year')}
+                        onPress={() => handlePress('year')}
                     >
                         <GridIcon color={activeTab === 'year' ? Colors.dark.text : Colors.dark.textTertiary} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.tab}
-                        onPress={() => onTabPress('journal')}
+                        onPress={() => handlePress('journal')}
                     >
                         {/* Using Plant Icon for the second tab instead of pencil */}
                         <PlantIcon color={activeTab === 'journal' ? Colors.dark.text : Colors.dark.textTertiary} />
