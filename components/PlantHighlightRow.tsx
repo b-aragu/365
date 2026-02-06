@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming, useSharedValue, withDelay } from 'react-native-reanimated';
-import { useJournalEntries } from '@/hooks/useJournalEntries';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { Colors } from '@/constants/Colors';
+import { JournalEntry } from '@/types';
 
-export const PlantHighlightRow = () => {
-    const { entries } = useJournalEntries();
+interface PlantHighlightRowProps {
+    entries: JournalEntry[];
+}
 
+export const PlantHighlightRow = ({ entries }: PlantHighlightRowProps) => {
     // Calculate progress for the year
     const currentDayOfYear = getDayOfYear(new Date());
     const entriesThisYear = entries.filter(e => e.year === new Date().getFullYear()).length;

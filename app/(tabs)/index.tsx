@@ -131,7 +131,7 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.iconRowContainer}>
-                <PlantHighlightRow />
+                <PlantHighlightRow entries={entries} />
             </View>
 
             <View style={styles.gridContainer}>
