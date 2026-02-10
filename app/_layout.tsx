@@ -15,10 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initDatabase } from '@/utils/storage';
 // Register widget task handler
 import '@/widgets';
-import { requestWidgetUpdate } from 'react-native-android-widget';
-
-const WIDGETS_TO_UPDATE = ['YearWidget', 'PlantGrowthWidget', 'CircularProgressWidget', 'DaysStripWidget'];
-
+import { refreshWidgetsWithRetry } from '@/utils/widgets';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => { });
@@ -71,18 +68,8 @@ export default function RootLayout() {
 
             setAppReady(true);
 
-            // Trigger widget updates to ensure they are fresh
-            WIDGETS_TO_UPDATE.forEach(widgetName => {
-                requestWidgetUpdate({
-                    widgetName,
-                    renderWidget: async () => {
-                        const { getWidget } = await import('@/widgets/YearWidget');
-                        return await getWidget(widgetName);
-                    }
-                }).catch(err => {
-                    console.log(`Failed to update widget ${widgetName}:`, err);
-                });
-            });
+            // Trigger widget updates to ensure they are fresh and visible on launcher
+            refreshWidgetsWithRetry().catch(() => { });
         };
 
         initialize();

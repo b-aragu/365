@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { DayDot } from './DayDot';
-import { generateYearDays } from '@/utils/dateUtils';
+import { generateYearDays, getTodayDateString } from '@/utils/dateUtils';
 import { JournalEntry } from '@/types';
 import { Layout } from '@/constants/Layout';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
@@ -28,7 +28,7 @@ const getPlantInfo = (plantId?: string) => {
 const MemoizedDayDot = memo(DayDot);
 
 export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress }) => {
-    const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const today = getTodayDateString();
     const days = useMemo(() => generateYearDays(year), [year]);
 
     // O(1) entry lookup
@@ -43,31 +43,6 @@ export const YearGrid: React.FC<YearGridProps> = ({ year, entries, onDayPress })
             onDayPress(date);
         }
     }, [onDayPress]);
-
-    const renderItem = useCallback(({ item }: { item: any }) => {
-        const entry = entryMap.get(item.date);
-        const isToday = item.date === today;
-        const isFuture = item.date > today;
-
-        // Get plant info for colored icon
-        const plantInfo = entry ? getPlantInfo(entry.plantIconId) : null;
-
-        return (
-            <MemoizedDayDot
-                date={item.date}
-                isFilled={!!entry}
-                isToday={isToday}
-                isFuture={isFuture}
-                PlantIcon={plantInfo?.component}
-                plantColor={plantInfo?.color}
-                onPress={() => handleDayPress(item.date, isFuture)}
-                disabled={isFuture}
-                index={0} // Default for single item render (not used in map much)
-            />
-        );
-    }, [entryMap, today, handleDayPress]);
-
-    const keyExtractor = useCallback((item: any) => item.date, []);
 
     // OPTIMIZATION: Use ScrollView + FlexWrap instead of FlatList for fixed grid (~365 items)
     // This removes virtualization overhead for a dataset that fits easily in memory

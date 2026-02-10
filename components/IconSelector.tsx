@@ -1,9 +1,9 @@
 import React, { useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, FlatList } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/Colors';
 import { Layout } from '@/constants/Layout';
 import { PLANT_ICONS_LIST } from '@/assets/icons/plants';
+import { triggerSelectionHaptic } from '@/utils/haptics';
 
 interface IconSelectorProps {
     visible: boolean;
@@ -14,7 +14,7 @@ interface IconSelectorProps {
 
 export const IconSelector: React.FC<IconSelectorProps> = ({ visible, onSelect, onClose, selectedIconId }) => {
     const handleSelect = (id: string) => {
-        Haptics.selectionAsync();
+        triggerSelectionHaptic().catch(() => { });
         onSelect(id);
     };
 

@@ -6,8 +6,8 @@ export const useJournalEntries = () => {
     const [entries, setEntries] = useState<JournalEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const refreshEntries = useCallback(async () => {
-        setLoading(true);
+    const refreshEntries = useCallback(async (showLoading: boolean = true) => {
+        if (showLoading) setLoading(true);
         const data = await storage.getAllEntries();
         setEntries(data);
         setLoading(false);
@@ -15,11 +15,16 @@ export const useJournalEntries = () => {
 
     useEffect(() => {
         refreshEntries();
+
+        const unsubscribe = storage.subscribeToEntryChanges(() => {
+            refreshEntries(false);
+        });
+
+        return unsubscribe;
     }, [refreshEntries]);
 
     const addEntry = async (entry: JournalEntry) => {
         await storage.saveEntry(entry);
-        await refreshEntries();
     };
 
     return {
