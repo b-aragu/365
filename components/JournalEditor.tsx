@@ -22,6 +22,8 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
     initialContent = '',
     initialIconId,
     onSave,
+    onDelete,
+    isNewEntry,
     readOnly = false,
 }) => {
     const [content, setContent] = useState(initialContent);
@@ -97,6 +99,11 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
             }, 2000);
         }
     }, [content, iconId, onSave, readOnly]);
+
+
+    const handleDeletePress = useCallback(async () => {
+        await onDelete();
+    }, [onDelete]);
 
     // Auto-save after inactivity
     useEffect(() => {
@@ -262,6 +269,14 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
                     </View>
                 )}
 
+                {!isNewEntry && (
+                    <View style={styles.deleteButtonContainer}>
+                        <TouchableOpacity style={styles.deleteButton} onPress={handleDeletePress}>
+                            <Text style={styles.deleteButtonText}>Delete Memory</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 <View style={styles.bottomSpacer} />
             </Animated.View>
         </TouchableWithoutFeedback>
@@ -353,6 +368,23 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontFamily: 'Inter_600SemiBold',
+    },
+    deleteButtonContainer: {
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    deleteButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 83, 80, 0.4)',
+        backgroundColor: 'rgba(239, 83, 80, 0.12)',
+    },
+    deleteButtonText: {
+        color: Colors.dark.error,
+        fontSize: 13,
+        fontFamily: 'Inter_500Medium',
     },
     bottomSpacer: {
         height: 90,

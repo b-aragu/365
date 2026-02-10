@@ -1,12 +1,12 @@
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Svg, Path } from 'react-native-svg';
 import { JournalEditor } from '@/components/JournalEditor';
 // import { useJournalEntries } from '@/hooks/useJournalEntries'; // Removed unused hook
 import { Colors } from '@/constants/Colors';
-import { getEntryByDate, saveEntry } from '@/utils/storage';
+import { deleteEntry, getEntryByDate, saveEntry } from '@/utils/storage';
 
 import { JournalEntry } from '@/types';
 import { getDayOfYear, getTodayDateString } from '@/utils/dateUtils';
@@ -79,7 +79,29 @@ export default function JournalPage() {
     };
 
     const handleDelete = async () => {
-        // Implement delete if needed
+        // Safety guard: only allow deleting entries for today
+        if (!entry || dateStatus !== 'today') return;
+
+        Alert.alert(
+            'Delete memory?',
+            'This will permanently remove this memory.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await deleteEntry(entry.id);
+                            setEntry(null);
+                            updateAllWidgets().catch(() => { });
+                        } catch (error) {
+                            Alert.alert('Delete failed', 'Could not delete this memory. Please try again.');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleTabPress = (tab: 'year' | 'journal' | 'settings') => {
